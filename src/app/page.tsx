@@ -167,9 +167,6 @@ export default function Home() {
                   </div>
                 </TableCell>
               )}
-              <TableCell className="font-semibold text-center text-primary text-lg transition-all duration-300">
-                {displayUser?.name}
-              </TableCell>
               <TableCell className="font-semibold text-center text-accent text-lg transition-all duration-300">
                 {output.winValue?.toLocaleString() ?? '0'}
               </TableCell>
@@ -209,7 +206,6 @@ export default function Home() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[120px]">User</TableHead>
-                    <TableHead className="text-center w-[150px]">出銃</TableHead>
                     <TableHead className="text-center w-[150px]">番數</TableHead>
                   </TableRow>
                 </TableHeader>
