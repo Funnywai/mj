@@ -107,7 +107,12 @@ export default function Home() {
 
   const handleReset = () => {
     setHistory(prev => [...prev, users]);
-    setUsers(generateInitialUsers());
+    setUsers(prevUsers => 
+      prevUsers.map(user => ({
+        ...user,
+        winValues: {}
+      }))
+    );
   };
 
   const handleRestore = () => {
