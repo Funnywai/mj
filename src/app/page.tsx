@@ -46,9 +46,11 @@ export default function Home() {
   
   const [currentUserForWinAction, setCurrentUserForWinAction] = useState<UserData | null>(null);
   const [dealerId, setDealerId] = useState<number>(1);
+  const [consecutiveWins, setConsecutiveWins] = useState<number>(0);
 
   const handleSetDealer = (userId: number) => {
     setDealerId(userId);
+    setConsecutiveWins(0);
   };
 
   const handleOpenWinActionDialog = (user: UserData) => {
@@ -59,6 +61,16 @@ export default function Home() {
   const handleOpenZimoActionDialog = (user: UserData) => {
     setCurrentUserForWinAction(user);
     setIsZimoActionDialogOpen(true);
+  };
+
+  const handleWin = (winnerId: number) => {
+    if (winnerId === dealerId) {
+      setConsecutiveWins(prev => prev + 1);
+    } else {
+      const nextDealerId = (dealerId % users.length) + 1;
+      setDealerId(nextDealerId);
+      setConsecutiveWins(0);
+    }
   };
 
   const handleSaveWinAction = (mainUserId: number, targetUserId: number, value: number) => {
@@ -73,6 +85,7 @@ export default function Home() {
         return user;
       });
     });
+    handleWin(mainUserId);
     setIsWinActionDialogOpen(false);
   };
 
@@ -91,6 +104,7 @@ export default function Home() {
         return user;
       });
     });
+    handleWin(mainUserId);
     setIsZimoActionDialogOpen(false);
   };
   
@@ -157,8 +171,8 @@ export default function Home() {
             <TableCell className="font-semibold text-foreground/90 align-top p-2">
               <div className="flex flex-col gap-2 items-start">
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleSetDealer(user.id)} className={cn("flex items-center justify-center font-bold text-lg w-6 h-6 rounded-md hover:bg-primary/20", isDealer ? "bg-yellow-400 text-yellow-800" : "bg-gray-200 text-gray-500")}>
-                    莊
+                  <button onClick={() => handleSetDealer(user.id)} className={cn("flex items-center justify-center font-bold text-sm w-auto px-1 h-6 rounded-md hover:bg-primary/20", isDealer ? "bg-yellow-400 text-yellow-800" : "bg-gray-200 text-gray-500")}>
+                    {isDealer && consecutiveWins > 0 ? `連${consecutiveWins}` : ''}莊
                   </button>
                   <Users className="h-4 w-4 text-primary"/>
                   {user.name}
@@ -185,7 +199,7 @@ export default function Home() {
         );
       })}
     </TableBody>
-  ), [users, totalScores, dealerId]);
+  ), [users, totalScores, dealerId, consecutiveWins]);
 
   const tableOpponentHeaders = useMemo(() => {
     return (
