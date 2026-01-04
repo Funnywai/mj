@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/table';
 import type { ScoreChange } from '@/app/page';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface UserData {
   id: number;
@@ -48,21 +49,19 @@ export function HistoryDialog({ isOpen, onClose, history, users }: HistoryDialog
         </DialogHeader>
         <ScrollArea className="h-96 w-full rounded-md border">
           <div className="p-4">
-            {history.slice().reverse().map((state, index) => (
-              <div key={index} className="mb-4 p-2 border-b">
-                <p className="font-semibold text-sm mb-2">
-                  {history.length - index}. {state.action}
-                </p>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {users.map(user => (
-                        <TableHead key={user.id} className="text-center">{user.name}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-left w-[200px]">Action</TableHead>
+                    {users.map(user => (
+                      <TableHead key={user.id} className="text-center">{user.name}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {history.slice().reverse().map((state, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-semibold">{state.action}</TableCell>
                       {users.map(user => {
                         const change = state.scoreChanges.find(sc => sc.userId === user.id)?.change ?? 0;
                         const isPositive = change > 0;
@@ -76,15 +75,14 @@ export function HistoryDialog({ isOpen, onClose, history, users }: HistoryDialog
                               isNegative && "text-red-600"
                             )}
                           >
-                            {isPositive ? `+${change}` : change}
+                            {isPositive ? `+${change}` : (change !== 0 ? change : '-')}
                           </TableCell>
                         );
                       })}
                     </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            ))}
+                  ))}
+                </TableBody>
+            </Table>
           </div>
         </ScrollArea>
       </DialogContent>
