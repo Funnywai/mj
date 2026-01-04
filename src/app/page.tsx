@@ -23,7 +23,6 @@ interface UserData {
   name: string;
   inputs: (number | string)[];
   userSum: number | null;
-  sharedAvg: number | null;
 }
 
 const initialUsers: UserData[] = Array.from({ length: 4 }, (_, i) => ({
@@ -31,7 +30,6 @@ const initialUsers: UserData[] = Array.from({ length: 4 }, (_, i) => ({
   name: `User ${i + 1}`,
   inputs: Array(6).fill(''),
   userSum: 0,
-  sharedAvg: 0,
 }));
 
 export default function Home() {
@@ -105,16 +103,7 @@ export default function Home() {
       );
       return { ...currentUser, userSum };
     });
-
-    const totalFirstInput = users.reduce(
-      (acc, user) => acc + (Number(user.inputs[0]) || 0),
-      0
-    );
-    const sharedAvg = users.length > 0 ? totalFirstInput / users.length : 0;
-
-    setUsers(
-      newUsers.map((user) => ({ ...user, sharedAvg: parseFloat(sharedAvg.toFixed(2)) }))
-    );
+    setUsers(newUsers);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(users.map(u => u.inputs))]);
   
@@ -131,9 +120,6 @@ export default function Home() {
           </TableCell>
           <TableCell className="font-semibold text-center text-primary transition-all duration-300">
             {user.userSum?.toLocaleString() ?? '0'}
-          </TableCell>
-          <TableCell className="font-semibold text-center text-primary/80 transition-all duration-300">
-            {user.sharedAvg?.toLocaleString() ?? '0'}
           </TableCell>
         </TableRow>
       ))}
@@ -180,7 +166,6 @@ export default function Home() {
                     <TableHead className="w-[120px]">User</TableHead>
                     <TableHead className="text-center">Inputs</TableHead>
                     <TableHead className="text-center">User's Sum</TableHead>
-                    <TableHead className="text-center">Shared Avg</TableHead>
                   </TableRow>
                 </TableHeader>
                 {memoizedTableBody}
