@@ -137,32 +137,48 @@ export default function Home() {
     const loser = users.find(u => u.id === targetUserId);
     const actionDescription = `${winner?.name} 食胡 ${loser?.name} ${value}番`;
     
-    let finalValue = value;
+    let currentScore = value;
     const dealerBonus = 2 * consecutiveWins - 1;
 
     if (mainUserId === dealerId) {
-      finalValue += dealerBonus;
+      currentScore += dealerBonus;
     } else if (targetUserId === dealerId) {
-      finalValue += dealerBonus;
+      currentScore += dealerBonus;
     }
 
+    let finalValue = currentScore;
+    const previousWinner = users.find(u => u.id === lastWinnerId);
+    if (previousWinner && previousWinner.id === mainUserId) {
+      const previousScore = previousWinner.winValues[targetUserId] || 0;
+      if (previousScore > 0) {
+        const bonus = Math.round(previousScore * 0.5);
+        finalValue = previousScore + bonus + currentScore;
+      }
+    }
+    
     const scoreChanges: ScoreChange[] = [
-      { userId: mainUserId, change: finalValue },
-      { userId: targetUserId, change: -finalValue },
+      { userId: mainUserId, change: finalValue - (users.find(u=>u.id===mainUserId)?.winValues[targetUserId] || 0) },
+      { userId: targetUserId, change: -(finalValue - (users.find(u=>u.id===mainUserId)?.winValues[targetUserId] || 0)) },
     ];
     saveStateToHistory(actionDescription, scoreChanges);
     
     updateLaCounts(mainUserId, [targetUserId]);
 
     setUsers(prevUsers => {
+      const winnerData = prevUsers.find(u => u.id === mainUserId);
+      
       return prevUsers.map(user => {
         if (user.id === mainUserId) {
           const newWinValues = { ...user.winValues };
-          newWinValues[targetUserId] = (newWinValues[targetUserId] || 0) + finalValue;
+          newWinValues[targetUserId] = finalValue;
           return { ...user, winValues: newWinValues };
         }
         if (user.id !== mainUserId) {
-          return { ...user, winValues: {} };
+          const newWinValues = { ...user.winValues };
+          if (newWinValues[mainUserId]) {
+            newWinValues[mainUserId] = 0;
+          }
+          return { ...user, winValues: newWinValues };
         }
         return user;
       });
@@ -209,7 +225,11 @@ export default function Home() {
                 return { ...user, winValues: newWinValues };
             }
             if (user.id !== mainUserId) {
-                return { ...user, winValues: {} };
+              const newWinValues = { ...user.winValues };
+               if (newWinValues[mainUserId]) {
+                 newWinValues[mainUserId] = 0;
+               }
+               return { ...user, winValues: newWinValues };
             }
             return user;
         });
@@ -277,16 +297,16 @@ export default function Home() {
     const scores: { [key: number]: number } = {};
     users.forEach(u => scores[u.id] = 0);
   
-    users.forEach(user => {
-      Object.entries(user.winValues).forEach(([opponentId, winValue]) => {
-        const score = winValue || 0;
-        scores[user.id] += score;
-        scores[Number(opponentId)] -= score;
+    history.forEach(state => {
+      state.scoreChanges.forEach(change => {
+        if (scores[change.userId] !== undefined) {
+          scores[change.userId] += change.change;
+        }
       });
     });
   
     return scores;
-  }, [users]);
+  }, [history, users]);
 
   const memoizedTableBody = useMemo(() => (
     <TableBody>
@@ -429,5 +449,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
