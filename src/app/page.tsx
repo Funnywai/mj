@@ -187,9 +187,6 @@ export default function Home() {
     <main className="container mx-auto flex min-h-screen flex-col items-center p-4 sm:p-8 md:p-12">
       <div className="w-full max-w-5xl">
         <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <h1 className="text-4xl font-bold text-primary tracking-tight">
-            FormulaShare
-          </h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsRenameDialogOpen(true)}>
               <Pencil className="mr-2 h-4 w-4" /> Rename
@@ -205,7 +202,6 @@ export default function Home() {
 
         <Card className="shadow-lg border-2 border-primary/10">
           <CardHeader>
-            <CardTitle className="text-lg text-foreground/90">User Data & Calculations</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
