@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Sparkles, Loader2, Edit, Users, ChevronsRight } from 'lucide-react';
+import { RefreshCw, Sparkles, Loader2, Edit, Users } from 'lucide-react';
 import { suggestCalculations } from '@/ai/flows/suggest-calculations';
 import type { SuggestCalculationsOutput } from '@/ai/flows/suggest-calculations';
 import { useToast } from '@/hooks/use-toast';
@@ -43,19 +43,19 @@ const initialUsers: UserData[] = Array.from({ length: 4 }, (_, i) => ({
   outputs: Array.from({ length: 3 }, (__, j) => ({
     id: j + 1,
     name: `Output ${j + 1}`,
-    subUsers: Array.from({ length: 4 })
-      .filter((_, k) => k + 1 !== i + 1)
-      .map((_, k) => {
-        const otherUserIds = Array.from({ length: 4 }).map((_,l) => l + 1).filter(id => id !== i + 1);
-        return {
-          id: otherUserIds[k],
-          name: `User ${otherUserIds[k]}`,
-          inputs: Array(6).fill(''),
-        };
-      }),
+    subUsers: Array.from({ length: 3 }).map((_, k) => {
+      const otherUserIds = Array.from({ length: 4 }).map((_, l) => l + 1).filter(id => id !== i + 1);
+      const subUserId = otherUserIds[k % otherUserIds.length];
+      return {
+        id: subUserId,
+        name: `User ${subUserId}`,
+        inputs: Array(6).fill(''),
+      };
+    }),
     outputSum: 0,
   })),
 }));
+
 
 export default function Home() {
   const [users, setUsers] = useState<UserData[]>(initialUsers);
@@ -65,22 +65,20 @@ export default function Home() {
   const { toast } = useToast();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentSubUser, setCurrentSubUser] = useState<{
+  const [currentOutput, setCurrentOutput] = useState<{
     mainUserId: number;
-    outputId: number;
-    subUser: SubUserData;
+    output: OutputData;
   } | null>(null);
 
-  const handleOpenDialog = (mainUserId: number, outputId: number, subUser: SubUserData) => {
-    setCurrentSubUser({ mainUserId, outputId, subUser });
+  const handleOpenDialog = (mainUserId: number, output: OutputData) => {
+    setCurrentOutput({ mainUserId, output });
     setIsDialogOpen(true);
   };
 
   const handleSaveInputs = (
     mainUserId: number,
     outputId: number,
-    subUserId: number,
-    newInputs: (number | string)[]
+    allInputs: (number | string)[]
   ) => {
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
@@ -91,9 +89,10 @@ export default function Home() {
                 output.id === outputId
                   ? {
                       ...output,
-                      subUsers: output.subUsers.map((subUser) =>
-                        subUser.id === subUserId ? { ...subUser, inputs: newInputs } : subUser
-                      ),
+                      subUsers: output.subUsers.map((subUser, index) => ({
+                        ...subUser,
+                        inputs: allInputs.slice(index * 6, (index + 1) * 6),
+                      })),
                     }
                   : output
               ),
@@ -103,6 +102,7 @@ export default function Home() {
     );
     setIsDialogOpen(false);
   };
+
 
   const handleReset = () => {
     setUsers(
@@ -124,6 +124,22 @@ export default function Home() {
     setIsSheetOpen(true);
     startSuggestionTransition(async () => {
       try {
+        const allRowsHaveData = users.every(user => 
+            user.outputs.every(output => {
+                const flatInputs = output.subUsers.flatMap(su => su.inputs);
+                return flatInputs.length === 18 && flatInputs.every(val => val !== '');
+            })
+        );
+
+        if (!allRowsHaveData) {
+            toast({
+                variant: 'destructive',
+                title: 'Incomplete Data',
+                description: 'Please ensure all 18 inputs are filled for every output row before requesting suggestions.',
+            });
+            return;
+        }
+
         const inputForAI = users.flatMap(user => 
             user.outputs.map(output => 
                 output.subUsers.flatMap(subUser => 
@@ -131,15 +147,6 @@ export default function Home() {
                 )
             )
         );
-
-        if (inputForAI.some(arr => arr.length !== 18)) {
-            toast({
-                variant: 'destructive',
-                title: 'Invalid Input',
-                description: 'Please ensure all inputs are filled (18 per output row).',
-            });
-            return;
-        }
 
         const result: SuggestCalculationsOutput = await suggestCalculations({ userInputs: inputForAI });
         setSuggestions(result.suggestions);
@@ -156,20 +163,36 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const newUsers = users.map((user) => ({
-      ...user,
-      outputs: user.outputs.map((output) => {
-        const outputSum = output.subUsers.reduce((total, subUser) => {
-          const subUserSum = subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0);
-          return total + subUserSum;
-        }, 0);
-        return { ...output, outputSum };
-      }),
-    }));
-    setUsers(newUsers);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(users.map(u => u.outputs.map(o => o.subUsers.map(su => su.inputs))))]);
+    const calculateSums = (currentUsers: UserData[]) => {
+      return currentUsers.map((user) => ({
+        ...user,
+        outputs: user.outputs.map((output) => {
+          const outputSum = output.subUsers.reduce((total, subUser) => {
+            const subUserSum = subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0);
+            return total + subUserSum;
+          }, 0);
+          return { ...output, outputSum };
+        }),
+      }));
+    };
+    setUsers(calculateSums);
+  }, []); // Run only once on mount to set initial sums
   
+  // A new useEffect to update sums when inputs change
+  useEffect(() => {
+     setUsers(prevUsers => {
+        return prevUsers.map(user => ({
+            ...user,
+            outputs: user.outputs.map(output => {
+                const outputSum = output.subUsers.reduce((total, subUser) => 
+                    total + subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0), 0);
+                return { ...output, outputSum };
+            })
+        }));
+     });
+  }, [users.map(u => u.outputs.map(o => o.subUsers.map(su => su.inputs)))]);
+
+
   const memoizedTableBody = useMemo(() => (
     <TableBody>
       {users.map((user) =>
@@ -185,20 +208,15 @@ export default function Home() {
             )}
             <TableCell className="font-medium text-foreground/80">{output.name}</TableCell>
             <TableCell>
-              <div className="flex flex-col gap-2">
-                {output.subUsers.map((subUser) => (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    key={subUser.id}
-                    onClick={() => handleOpenDialog(user.id, output.id, subUser)}
-                    className="w-full justify-start"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Data for {subUser.name}
-                  </Button>
-                ))}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleOpenDialog(user.id, output)}
+                className="w-full justify-start"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Enter Data for {output.name}
+              </Button>
             </TableCell>
             <TableCell className="font-semibold text-center text-primary text-lg transition-all duration-300">
               {output.outputSum?.toLocaleString() ?? '0'}
@@ -207,6 +225,7 @@ export default function Home() {
         ))
       )}
     </TableBody>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [users]);
 
 
@@ -248,7 +267,7 @@ export default function Home() {
                   <TableRow>
                     <TableHead className="w-[120px]">User</TableHead>
                     <TableHead className="w-[120px]">Output</TableHead>
-                    <TableHead className="w-[400px]">Inputs (6 per User)</TableHead>
+                    <TableHead className="w-[400px]">Inputs (18 per Output)</TableHead>
                     <TableHead className="text-center w-[150px]">Output Sum</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -264,13 +283,12 @@ export default function Home() {
         suggestions={suggestions}
         isLoading={isSuggesting}
       />
-      {currentSubUser && (
+      {currentOutput && (
         <UserInputDialog
           isOpen={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
-          mainUserId={currentSubUser.mainUserId}
-          outputId={currentSubUser.outputId}
-          subUser={currentSubUser.subUser}
+          mainUserId={currentOutput.mainUserId}
+          output={currentOutput.output}
           onSave={handleSaveInputs}
         />
       )}

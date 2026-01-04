@@ -42,7 +42,7 @@ User Input Values:
   Row {{@index}}: {{this}}
 {{/each}}
 
-Suggestions:`, 
+Based on the provided rows of 18 numbers, provide 3-5 insightful and varied calculation suggestions. The suggestions should be creative and explore relationships within and between the numbers.`,
 });
 
 const suggestCalculationsFlow = ai.defineFlow(

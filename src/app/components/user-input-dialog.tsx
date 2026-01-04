@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 interface SubUserData {
   id: number;
@@ -19,56 +20,75 @@ interface SubUserData {
   inputs: (number | string)[];
 }
 
+interface OutputData {
+  id: number;
+  name: string;
+  subUsers: SubUserData[];
+}
+
 interface UserInputDialogProps {
   isOpen: boolean;
   onClose: () => void;
   mainUserId: number;
-  outputId: number;
-  subUser: SubUserData;
-  onSave: (mainUserId: number, outputId: number, subUserId: number, inputs: (number | string)[]) => void;
+  output: OutputData;
+  onSave: (mainUserId: number, outputId: number, inputs: (number | string)[]) => void;
 }
 
-export function UserInputDialog({ isOpen, onClose, mainUserId, outputId, subUser, onSave }: UserInputDialogProps) {
-  const [inputs, setInputs] = useState<(number | string)[]>([]);
+export function UserInputDialog({ isOpen, onClose, mainUserId, output, onSave }: UserInputDialogProps) {
+  const [allInputs, setAllInputs] = useState<(number | string)[]>([]);
 
   useEffect(() => {
     if (isOpen) {
-      setInputs([...subUser.inputs]);
+      const flattenedInputs = output.subUsers.flatMap(su => su.inputs);
+      setAllInputs(flattenedInputs);
     }
-  }, [isOpen, subUser.inputs]);
+  }, [isOpen, output]);
 
   const handleInputChange = (index: number, value: string) => {
-    const newInputs = [...inputs];
+    const newInputs = [...allInputs];
     newInputs[index] = value;
-    setInputs(newInputs);
+    setAllInputs(newInputs);
   };
 
   const handleSave = () => {
-    onSave(mainUserId, outputId, subUser.id, inputs);
+    onSave(mainUserId, output.id, allInputs);
   };
+
+  if (!output) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Enter Data for {subUser.name}</DialogTitle>
+          <DialogTitle>Enter Data for {output.name}</DialogTitle>
           <DialogDescription>
-            Enter the six numerical values for this user.
+            Enter the 18 numerical values for this output row.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          {inputs.map((value, index) => (
-            <div className="grid grid-cols-3 items-center gap-2" key={index}>
-              <Label htmlFor={`input-${index}`} className="text-right col-span-1">
-                Input {index + 1}
-              </Label>
-              <Input
-                id={`input-${index}`}
-                type="number"
-                value={value}
-                onChange={(e) => handleInputChange(index, e.target.value)}
-                className="col-span-2"
-              />
+        <div className="py-4 space-y-6">
+          {output.subUsers.map((subUser, subUserIndex) => (
+            <div key={subUser.id}>
+              <h4 className="font-semibold text-lg mb-3 text-primary">{subUser.name}</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, inputIndex) => {
+                  const overallIndex = subUserIndex * 6 + inputIndex;
+                  return (
+                    <div className="grid grid-cols-3 items-center gap-2" key={overallIndex}>
+                      <Label htmlFor={`input-${overallIndex}`} className="text-right col-span-1">
+                        Input {inputIndex + 1}
+                      </Label>
+                      <Input
+                        id={`input-${overallIndex}`}
+                        type="number"
+                        value={allInputs[overallIndex] ?? ''}
+                        onChange={(e) => handleInputChange(overallIndex, e.target.value)}
+                        className="col-span-2"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              {subUserIndex < output.subUsers.length - 1 && <Separator className="mt-6" />}
             </div>
           ))}
         </div>
