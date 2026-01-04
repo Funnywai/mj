@@ -140,6 +140,10 @@ export default function Home() {
           newWinValues[targetUserId] = (newWinValues[targetUserId] || 0) + finalValue;
           return { ...user, winValues: newWinValues };
         }
+        // Reset winValues for all other users
+        if (user.id !== mainUserId) {
+          return { ...user, winValues: {} };
+        }
         return user;
       });
     });
@@ -169,6 +173,10 @@ export default function Home() {
                     newWinValues[opponentId] = (newWinValues[opponentId] || 0) + scoreToAdd;
                 });
                 return { ...user, winValues: newWinValues };
+            }
+            // Reset winValues for all other users
+            if (user.id !== mainUserId) {
+                return { ...user, winValues: {} };
             }
             return user;
         });
