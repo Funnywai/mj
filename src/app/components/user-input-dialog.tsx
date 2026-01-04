@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-interface UserData {
+interface SubUserData {
   id: number;
   name: string;
   inputs: (number | string)[];
@@ -22,18 +22,20 @@ interface UserData {
 interface UserInputDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  user: UserData;
-  onSave: (userId: number, inputs: (number | string)[]) => void;
+  mainUserId: number;
+  outputId: number;
+  subUser: SubUserData;
+  onSave: (mainUserId: number, outputId: number, subUserId: number, inputs: (number | string)[]) => void;
 }
 
-export function UserInputDialog({ isOpen, onClose, user, onSave }: UserInputDialogProps) {
+export function UserInputDialog({ isOpen, onClose, mainUserId, outputId, subUser, onSave }: UserInputDialogProps) {
   const [inputs, setInputs] = useState<(number | string)[]>([]);
 
   useEffect(() => {
     if (isOpen) {
-      setInputs([...user.inputs]);
+      setInputs([...subUser.inputs]);
     }
-  }, [isOpen, user.inputs]);
+  }, [isOpen, subUser.inputs]);
 
   const handleInputChange = (index: number, value: string) => {
     const newInputs = [...inputs];
@@ -42,22 +44,22 @@ export function UserInputDialog({ isOpen, onClose, user, onSave }: UserInputDial
   };
 
   const handleSave = () => {
-    onSave(user.id, inputs);
+    onSave(mainUserId, outputId, subUser.id, inputs);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Enter Data for {user.name}</DialogTitle>
+          <DialogTitle>Enter Data for {subUser.name}</DialogTitle>
           <DialogDescription>
             Enter the six numerical values for this user.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid grid-cols-2 gap-4 py-4">
           {inputs.map((value, index) => (
-            <div className="grid grid-cols-4 items-center gap-4" key={index}>
-              <Label htmlFor={`input-${index}`} className="text-right">
+            <div className="grid grid-cols-3 items-center gap-2" key={index}>
+              <Label htmlFor={`input-${index}`} className="text-right col-span-1">
                 Input {index + 1}
               </Label>
               <Input
@@ -65,7 +67,7 @@ export function UserInputDialog({ isOpen, onClose, user, onSave }: UserInputDial
                 type="number"
                 value={value}
                 onChange={(e) => handleInputChange(index, e.target.value)}
-                className="col-span-3"
+                className="col-span-2"
               />
             </div>
           ))}
