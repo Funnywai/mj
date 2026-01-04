@@ -149,11 +149,11 @@ export default function Home() {
     let finalValue = currentScore;
     const previousWinner = users.find(u => u.id === lastWinnerId);
     if (previousWinner && previousWinner.id === mainUserId) {
-      const previousScore = previousWinner.winValues[targetUserId] || 0;
-      if (previousScore > 0) {
-        const bonus = Math.round(previousScore * 0.5);
-        finalValue = previousScore + bonus + currentScore;
-      }
+        const previousScore = winner?.winValues[targetUserId] || 0;
+        if (previousScore > 0) {
+            const bonus = Math.round(previousScore * 0.5);
+            finalValue = previousScore + bonus + currentScore;
+        }
     }
     
     const scoreChanges: ScoreChange[] = [
@@ -166,16 +166,29 @@ export default function Home() {
 
     setUsers(prevUsers => {
       const isNewWinner = mainUserId !== lastWinnerId;
-      const winnerData = prevUsers.find(u => u.id === mainUserId);
       
-      return prevUsers.map(user => {
+      let updatedUsers = prevUsers.map(user => {
+          if (isNewWinner && user.id !== mainUserId) {
+              return { ...user, winValues: {} };
+          }
+          return user;
+      });
+
+      updatedUsers = updatedUsers.map(user => {
         if (user.id === mainUserId) {
-          const newWinValues = { ...user.winValues };
+          const newWinValues = isNewWinner ? {} : { ...user.winValues };
           newWinValues[targetUserId] = finalValue;
+
+          // When a new winner wins, reset other opponent scores for the winner.
+          if (isNewWinner) {
+              Object.keys(newWinValues).forEach(key => {
+                  if (parseInt(key) !== targetUserId) {
+                      newWinValues[parseInt(key)] = 0;
+                  }
+              });
+          }
+          
           return { ...user, winValues: newWinValues };
-        }
-        if (isNewWinner) {
-            return { ...user, winValues: {} };
         }
         if (user.id !== mainUserId) {
           const newWinValues = { ...user.winValues };
@@ -186,6 +199,7 @@ export default function Home() {
         }
         return user;
       });
+      return updatedUsers;
     });
     handleWin(mainUserId);
     setIsWinActionDialogOpen(false);
@@ -221,26 +235,26 @@ export default function Home() {
 
     setUsers(prevUsers => {
         const isNewWinner = mainUserId !== lastWinnerId;
-        return prevUsers.map(user => {
+        
+        let updatedUsers = prevUsers.map(user => {
+          if (isNewWinner && user.id !== mainUserId) {
+              return { ...user, winValues: {} };
+          }
+          return user;
+        });
+
+        updatedUsers = updatedUsers.map(user => {
             if (user.id === mainUserId) {
-                const newWinValues = { ...user.winValues };
+                const newWinValues = isNewWinner ? {} : { ...user.winValues };
                 Object.entries(scoresToAdd).forEach(([opponentId, score]) => {
                     newWinValues[parseInt(opponentId)] = (newWinValues[parseInt(opponentId)] || 0) + score;
                 });
                 return { ...user, winValues: newWinValues };
             }
-             if (isNewWinner) {
-                return { ...user, winValues: {} };
-            }
-            if (user.id !== mainUserId) {
-              const newWinValues = { ...user.winValues };
-               if (newWinValues[mainUserId]) {
-                 newWinValues[mainUserId] = 0;
-               }
-               return { ...user, winValues: newWinValues };
-            }
             return user;
         });
+
+        return updatedUsers;
     });
     handleWin(mainUserId);
     setIsZimoActionDialogOpen(false);
