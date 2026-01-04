@@ -199,9 +199,6 @@ export default function Home() {
                   </div>
                 </TableCell>
               )}
-              <TableCell className="font-medium text-foreground/80">
-                {displayUser ? displayUser.name : ''}
-              </TableCell>
               <TableCell>
                 <Button
                   variant="outline"
@@ -210,7 +207,7 @@ export default function Home() {
                   className="w-full justify-start"
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  Enter Data
+                   {displayUser ? displayUser.name : ''}
                 </Button>
               </TableCell>
               <TableCell className="font-semibold text-center text-primary text-lg transition-all duration-300">
@@ -255,8 +252,7 @@ export default function Home() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[120px]">User</TableHead>
-                    <TableHead className="w-[150px]">出統</TableHead>
-                    <TableHead className="w-[200px]">食</TableHead>
+                    <TableHead className="w-[200px]">Data Entry</TableHead>
                     <TableHead className="text-center w-[150px]">番數</TableHead>
                     <TableHead className="text-center w-[150px]">自摸/出銃</TableHead>
                   </TableRow>
