@@ -75,6 +75,13 @@ export default function Home() {
     setIsDialogOpen(true);
   };
 
+  const calculateSumForOutput = (output: OutputData) => {
+    return output.subUsers.reduce((total, subUser) => {
+        const subUserSum = subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0);
+        return total + subUserSum;
+    }, 0);
+  };
+
   const handleSaveInputs = (
     mainUserId: number,
     outputId: number,
@@ -93,6 +100,7 @@ export default function Home() {
                         ...subUser,
                         inputs: allInputs.slice(index * 6, (index + 1) * 6),
                       })),
+                      outputSum: allInputs.reduce((acc, val) => acc + (Number(val) || 0), 0),
                     }
                   : output
               ),
@@ -105,18 +113,7 @@ export default function Home() {
 
 
   const handleReset = () => {
-    setUsers(
-      users.map((user) => ({
-        ...user,
-        outputs: user.outputs.map(output => ({
-          ...output,
-          subUsers: output.subUsers.map(subUser => ({
-            ...subUser,
-            inputs: Array(6).fill('')
-          }))
-        }))
-      }))
-    );
+    setUsers(initialUsers);
     setSuggestions([]);
   };
 
@@ -162,44 +159,13 @@ export default function Home() {
     });
   };
 
-  useEffect(() => {
-    const calculateSums = (currentUsers: UserData[]) => {
-      return currentUsers.map((user) => ({
-        ...user,
-        outputs: user.outputs.map((output) => {
-          const outputSum = output.subUsers.reduce((total, subUser) => {
-            const subUserSum = subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0);
-            return total + subUserSum;
-          }, 0);
-          return { ...output, outputSum };
-        }),
-      }));
-    };
-    setUsers(calculateSums);
-  }, []); // Run only once on mount to set initial sums
-  
-  // A new useEffect to update sums when inputs change
-  useEffect(() => {
-     setUsers(prevUsers => {
-        return prevUsers.map(user => ({
-            ...user,
-            outputs: user.outputs.map(output => {
-                const outputSum = output.subUsers.reduce((total, subUser) => 
-                    total + subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0), 0);
-                return { ...output, outputSum };
-            })
-        }));
-     });
-  }, [users.map(u => u.outputs.map(o => o.subUsers.map(su => su.inputs)))]);
-
-
   const memoizedTableBody = useMemo(() => (
     <TableBody>
       {users.map((user) =>
         user.outputs.map((output, outputIndex) => (
           <TableRow key={`${user.id}-${output.id}`}>
             {outputIndex === 0 && (
-              <TableCell className="font-semibold text-foreground/90 align-top" rowSpan={3}>
+              <TableCell className="font-semibold text-foreground/90 align-top" rowSpan={user.outputs.length}>
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary"/>
                   {user.name}
