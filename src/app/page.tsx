@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -18,16 +18,10 @@ import { useToast } from '@/hooks/use-toast';
 import { SuggestionsSheet } from '@/app/components/suggestions-sheet';
 import { UserInputDialog } from '@/app/components/user-input-dialog';
 
-interface SubUserData {
-  id: number;
-  name: string;
-  inputs: (number | string)[];
-}
-
 interface OutputData {
   id: number;
   name: string;
-  subUsers: SubUserData[];
+  inputs: (number | string)[];
   outputSum: number | null;
 }
 
@@ -43,15 +37,7 @@ const initialUsers: UserData[] = Array.from({ length: 4 }, (_, i) => ({
   outputs: Array.from({ length: 3 }, (__, j) => ({
     id: j + 1,
     name: `Output ${j + 1}`,
-    subUsers: Array.from({ length: 3 }).map((_, k) => {
-      const otherUserIds = Array.from({ length: 4 }).map((_, l) => l + 1).filter(id => id !== i + 1);
-      const subUserId = otherUserIds[k % otherUserIds.length];
-      return {
-        id: subUserId,
-        name: `User ${subUserId}`,
-        inputs: Array(6).fill(''),
-      };
-    }),
+    inputs: Array(6).fill(''),
     outputSum: 0,
   })),
 }));
@@ -75,17 +61,10 @@ export default function Home() {
     setIsDialogOpen(true);
   };
 
-  const calculateSumForOutput = (output: OutputData) => {
-    return output.subUsers.reduce((total, subUser) => {
-        const subUserSum = subUser.inputs.reduce((acc, val) => acc + (Number(val) || 0), 0);
-        return total + subUserSum;
-    }, 0);
-  };
-
   const handleSaveInputs = (
     mainUserId: number,
     outputId: number,
-    allInputs: (number | string)[]
+    inputs: (number | string)[]
   ) => {
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
@@ -96,11 +75,8 @@ export default function Home() {
                 output.id === outputId
                   ? {
                       ...output,
-                      subUsers: output.subUsers.map((subUser, index) => ({
-                        ...subUser,
-                        inputs: allInputs.slice(index * 6, (index + 1) * 6),
-                      })),
-                      outputSum: allInputs.reduce((acc, val) => acc + (Number(val) || 0), 0),
+                      inputs: inputs,
+                      outputSum: inputs.reduce((acc, val) => acc + (Number(val) || 0), 0),
                     }
                   : output
               ),
@@ -123,8 +99,7 @@ export default function Home() {
       try {
         const allRowsHaveData = users.every(user => 
             user.outputs.every(output => {
-                const flatInputs = output.subUsers.flatMap(su => su.inputs);
-                return flatInputs.length === 18 && flatInputs.every(val => val !== '');
+                return output.inputs.length === 6 && output.inputs.every(val => val !== '');
             })
         );
 
@@ -132,16 +107,14 @@ export default function Home() {
             toast({
                 variant: 'destructive',
                 title: 'Incomplete Data',
-                description: 'Please ensure all 18 inputs are filled for every output row before requesting suggestions.',
+                description: 'Please ensure all 6 inputs are filled for every output row before requesting suggestions.',
             });
             return;
         }
 
         const inputForAI = users.flatMap(user => 
             user.outputs.map(output => 
-                output.subUsers.flatMap(subUser => 
-                    subUser.inputs.map(val => Number(val) || 0)
-                )
+                output.inputs.map(val => Number(val) || 0)
             )
         );
 
@@ -233,7 +206,7 @@ export default function Home() {
                   <TableRow>
                     <TableHead className="w-[120px]">User</TableHead>
                     <TableHead className="w-[120px]">Output</TableHead>
-                    <TableHead className="w-[400px]">Inputs (18 per Output)</TableHead>
+                    <TableHead className="w-[400px]">Inputs (6 per Output)</TableHead>
                     <TableHead className="text-center w-[150px]">Output Sum</TableHead>
                   </TableRow>
                 </TableHeader>

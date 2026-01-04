@@ -13,8 +13,8 @@ import {z} from 'genkit';
 
 const SuggestCalculationsInputSchema = z.object({
   userInputs: z.array(
-    z.array(z.number()).length(18).describe('Eighteen numerical input values for one output row.')
-  ).describe('Input values from a variable number of output rows, each containing 18 numbers.'),
+    z.array(z.number()).length(6).describe('Six numerical input values for one output row.')
+  ).describe('Input values from a variable number of output rows, each containing 6 numbers.'),
 });
 
 export type SuggestCalculationsInput = z.infer<typeof SuggestCalculationsInputSchema>;
@@ -35,14 +35,14 @@ const suggestCalculationsPrompt = ai.definePrompt({
   name: 'suggestCalculationsPrompt',
   input: {schema: SuggestCalculationsInputSchema},
   output: {schema: SuggestCalculationsOutputSchema},
-  prompt: `Given the input values from users, suggest some interesting calculations or formulas that could be applied to these numbers to gain insights. Each user input set contains 18 numbers.
+  prompt: `Given the input values from users, suggest some interesting calculations or formulas that could be applied to these numbers to gain insights. Each user input set contains 6 numbers.
 
 User Input Values:
 {{#each userInputs}}
   Row {{@index}}: {{this}}
 {{/each}}
 
-Based on the provided rows of 18 numbers, provide 3-5 insightful and varied calculation suggestions. The suggestions should be creative and explore relationships within and between the numbers.`,
+Based on the provided rows of 6 numbers, provide 3-5 insightful and varied calculation suggestions. The suggestions should be creative and explore relationships within and between the numbers.`,
 });
 
 const suggestCalculationsFlow = ai.defineFlow(

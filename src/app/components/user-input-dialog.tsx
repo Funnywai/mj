@@ -12,18 +12,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-
-interface SubUserData {
-  id: number;
-  name: string;
-  inputs: (number | string)[];
-}
 
 interface OutputData {
   id: number;
   name: string;
-  subUsers: SubUserData[];
+  inputs: (number | string)[];
 }
 
 interface UserInputDialogProps {
@@ -35,62 +28,52 @@ interface UserInputDialogProps {
 }
 
 export function UserInputDialog({ isOpen, onClose, mainUserId, output, onSave }: UserInputDialogProps) {
-  const [allInputs, setAllInputs] = useState<(number | string)[]>([]);
+  const [inputs, setInputs] = useState<(number | string)[]>([]);
 
   useEffect(() => {
     if (isOpen) {
-      const flattenedInputs = output.subUsers.flatMap(su => su.inputs);
-      setAllInputs(flattenedInputs);
+      setInputs(output.inputs);
     }
   }, [isOpen, output]);
 
   const handleInputChange = (index: number, value: string) => {
-    const newInputs = [...allInputs];
+    const newInputs = [...inputs];
     newInputs[index] = value;
-    setAllInputs(newInputs);
+    setInputs(newInputs);
   };
 
   const handleSave = () => {
-    onSave(mainUserId, output.id, allInputs);
+    onSave(mainUserId, output.id, inputs);
   };
 
   if (!output) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Enter Data for {output.name}</DialogTitle>
           <DialogDescription>
-            Enter the 18 numerical values for this output row.
+            Enter the 6 numerical values for this output row.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-6">
-          {output.subUsers.map((subUser, subUserIndex) => (
-            <div key={subUser.id}>
-              <h4 className="font-semibold text-lg mb-3 text-primary">{subUser.name}</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, inputIndex) => {
-                  const overallIndex = subUserIndex * 6 + inputIndex;
-                  return (
-                    <div className="grid grid-cols-3 items-center gap-2" key={overallIndex}>
-                      <Label htmlFor={`input-${overallIndex}`} className="text-right col-span-1">
-                        Input {inputIndex + 1}
-                      </Label>
-                      <Input
-                        id={`input-${overallIndex}`}
-                        type="number"
-                        value={allInputs[overallIndex] ?? ''}
-                        onChange={(e) => handleInputChange(overallIndex, e.target.value)}
-                        className="col-span-2"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-              {subUserIndex < output.subUsers.length - 1 && <Separator className="mt-6" />}
+        <div className="py-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div className="grid grid-cols-3 items-center gap-2" key={index}>
+                  <Label htmlFor={`input-${index}`} className="text-right col-span-1">
+                    Input {index + 1}
+                  </Label>
+                  <Input
+                    id={`input-${index}`}
+                    type="number"
+                    value={inputs[index] ?? ''}
+                    onChange={(e) => handleInputChange(index, e.target.value)}
+                    className="col-span-2"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
