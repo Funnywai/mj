@@ -79,6 +79,8 @@ export function WinActionDialog({ isOpen, onClose, mainUser, users, onSave }: Wi
             <Input
               id="value-input"
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="Enter a number"
