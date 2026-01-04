@@ -121,12 +121,9 @@ export default function Home() {
     return scores;
   }, [users]);
 
-  const opponentUsers = (userId: number) => users.filter(u => u.id !== userId);
-
   const memoizedTableBody = useMemo(() => (
     <TableBody>
       {users.map((user) => {
-        const opponents = opponentUsers(user.id);
         return (
           <TableRow key={user.id}>
             <TableCell className="font-semibold text-foreground/90 align-top">
@@ -148,7 +145,7 @@ export default function Home() {
                 </div>
               </div>
             </TableCell>
-            {opponents.map(opponent => (
+            {users.map(opponent => (
                 <TableCell key={opponent.id} className="font-semibold text-center text-accent text-lg transition-all duration-300">
                     {(user.winValues[opponent.id] || 0).toLocaleString()}
                 </TableCell>
@@ -160,13 +157,10 @@ export default function Home() {
   ), [users, totalScores]);
 
   const tableOpponentHeaders = useMemo(() => {
-    if (users.length === 0) return null;
-    const firstUser = users[0];
-    const opponents = opponentUsers(firstUser.id);
     return (
-        opponents.map(opponent => (
-            <TableHead key={opponent.id} className="text-center w-[150px]">
-                {users.find(u => u.id === opponent.id)?.name}
+        users.map(user => (
+            <TableHead key={user.id} className="text-center w-[150px]">
+                {user.name}
             </TableHead>
         ))
     );
@@ -200,7 +194,7 @@ export default function Home() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[120px]">User</TableHead>
-                    <TableHead colSpan={users.length - 1} className="text-center w-[150px]">番數</TableHead>
+                    <TableHead colSpan={users.length} className="text-center w-[150px]">番數</TableHead>
                   </TableRow>
                   <TableRow>
                     <TableHead></TableHead>
