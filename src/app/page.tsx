@@ -23,6 +23,7 @@ interface OutputData {
   inputs: (number | string)[];
   outputSum: number | null;
   displayUserId: number;
+  winValue: number | null;
 }
 
 interface UserData {
@@ -50,6 +51,7 @@ const generateInitialUsers = (): UserData[] => {
         inputs: Array(6).fill(''),
         outputSum: 0,
         displayUserId: displayUser.id,
+        winValue: null,
       };
     });
   });
@@ -120,7 +122,7 @@ export default function Home() {
               if (output.displayUserId === targetUserId) {
                 return {
                   ...output,
-                  outputSum: (output.outputSum || 0) + value
+                  winValue: (output.winValue || 0) + value,
                 };
               }
               return output;
@@ -157,6 +159,21 @@ export default function Home() {
   const handleReset = () => {
     setUsers(generateInitialUsers());
   };
+  
+  const totalScores = useMemo(() => {
+    const scores: { [key: number]: number } = {};
+    users.forEach(u => scores[u.id] = 0);
+
+    users.forEach(user => {
+        user.outputs.forEach(output => {
+            const score = (output.outputSum || 0) + (output.winValue || 0);
+            scores[user.id] += score;
+            scores[output.displayUserId] -= score;
+        });
+    });
+
+    return scores;
+  }, [users]);
 
   const memoizedTableBody = useMemo(() => (
     <TableBody>
@@ -176,6 +193,9 @@ export default function Home() {
                     <Button variant="outline" size="sm" onClick={() => handleOpenWinActionDialog(user)}>
                        食胡
                     </Button>
+                    <div className="font-bold text-xl mt-2">
+                        Total: {totalScores[user.id].toLocaleString()}
+                    </div>
                   </div>
                 </TableCell>
               )}
@@ -196,13 +216,16 @@ export default function Home() {
               <TableCell className="font-semibold text-center text-primary text-lg transition-all duration-300">
                 {output.outputSum?.toLocaleString() ?? '0'}
               </TableCell>
+              <TableCell className="font-semibold text-center text-accent text-lg transition-all duration-300">
+                {output.winValue?.toLocaleString() ?? '0'}
+              </TableCell>
             </TableRow>
           );
         })
       )}
     </TableBody>
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [users]);
+  ), [users, totalScores]);
 
 
   return (
@@ -232,9 +255,10 @@ export default function Home() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[120px]">User</TableHead>
-                    <TableHead className="w-[200px]">出統</TableHead>
-                    <TableHead className="w-[400px]">食</TableHead>
+                    <TableHead className="w-[150px]">出統</TableHead>
+                    <TableHead className="w-[200px]">食</TableHead>
                     <TableHead className="text-center w-[150px]">番數</TableHead>
+                    <TableHead className="text-center w-[150px]">自摸/出銃</TableHead>
                   </TableRow>
                 </TableHeader>
                 {memoizedTableBody}
