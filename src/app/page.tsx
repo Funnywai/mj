@@ -11,12 +11,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, Sparkles, Loader2, Edit, Users } from 'lucide-react';
+import { RefreshCw, Sparkles, Loader2, Edit, Users, Pencil } from 'lucide-react';
 import { suggestCalculations } from '@/ai/flows/suggest-calculations';
 import type { SuggestCalculationsOutput } from '@/ai/flows/suggest-calculations';
 import { useToast } from '@/hooks/use-toast';
 import { SuggestionsSheet } from '@/app/components/suggestions-sheet';
 import { UserInputDialog } from '@/app/components/user-input-dialog';
+import { RenameDialog } from '@/app/components/rename-dialog';
 
 interface OutputData {
   id: number;
@@ -36,7 +37,7 @@ const initialUsers: UserData[] = Array.from({ length: 4 }, (_, i) => ({
   name: `User ${i + 1}`,
   outputs: Array.from({ length: 3 }, (__, j) => ({
     id: j + 1,
-    name: `Output ${j + 1}`,
+    name: `User ${i + 1} Output ${j + 1}`,
     inputs: Array(6).fill(''),
     outputSum: 0,
   })),
@@ -50,7 +51,8 @@ export default function Home() {
   const [isSuggesting, startSuggestionTransition] = useTransition();
   const { toast } = useToast();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isInputDialogOpen, setIsInputDialogOpen] = useState(false);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [currentOutput, setCurrentOutput] = useState<{
     mainUserId: number;
     output: OutputData;
@@ -58,7 +60,7 @@ export default function Home() {
 
   const handleOpenDialog = (mainUserId: number, output: OutputData) => {
     setCurrentOutput({ mainUserId, output });
-    setIsDialogOpen(true);
+    setIsInputDialogOpen(true);
   };
 
   const handleSaveInputs = (
@@ -84,9 +86,28 @@ export default function Home() {
           : user
       )
     );
-    setIsDialogOpen(false);
+    setIsInputDialogOpen(false);
   };
 
+  const handleSaveUserNames = (updatedUsers: { id: number; name: string }[]) => {
+    setUsers((prevUsers) => {
+      return prevUsers.map((user) => {
+        const updatedUser = updatedUsers.find((u) => u.id === user.id);
+        if (updatedUser) {
+          return {
+            ...user,
+            name: updatedUser.name,
+            outputs: user.outputs.map((output, index) => ({
+              ...output,
+              name: `${updatedUser.name} Output ${index + 1}`,
+            })),
+          };
+        }
+        return user;
+      });
+    });
+    setIsRenameDialogOpen(false);
+  };
 
   const handleReset = () => {
     setUsers(initialUsers);
@@ -154,7 +175,7 @@ export default function Home() {
                 className="w-full justify-start"
               >
                 <Edit className="mr-2 h-4 w-4" />
-                Enter Data for {output.name}
+                Enter Data
               </Button>
             </TableCell>
             <TableCell className="font-semibold text-center text-primary text-lg transition-all duration-300">
@@ -176,6 +197,9 @@ export default function Home() {
             FormulaShare
           </h1>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsRenameDialogOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" /> Rename
+            </Button>
             <Button variant="outline" onClick={handleReset}>
               <RefreshCw className="mr-2 h-4 w-4" /> Reset
             </Button>
@@ -224,13 +248,20 @@ export default function Home() {
       />
       {currentOutput && (
         <UserInputDialog
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
+          isOpen={isInputDialogOpen}
+          onClose={() => setIsInputDialogOpen(false)}
           mainUserId={currentOutput.mainUserId}
           output={currentOutput.output}
           onSave={handleSaveInputs}
         />
       )}
+      <RenameDialog
+        isOpen={isRenameDialogOpen}
+        onClose={() => setIsRenameDialogOpen(false)}
+        users={users}
+        onSave={handleSaveUserNames}
+       />
+
     </main>
   );
 }
