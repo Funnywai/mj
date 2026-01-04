@@ -11,11 +11,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { RefreshCw, Users, Pencil, History } from 'lucide-react';
+import { RefreshCw, Users, Pencil, History, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { RenameDialog } from '@/app/components/rename-dialog';
 import { WinActionDialog } from '@/app/components/win-action-dialog';
 import { ZimoActionDialog } from '@/app/components/zimo-action-dialog';
+import { cn } from '@/lib/utils';
 
 interface UserData {
   id: number;
@@ -44,6 +45,11 @@ export default function Home() {
   const [isZimoActionDialogOpen, setIsZimoActionDialogOpen] = useState(false);
   
   const [currentUserForWinAction, setCurrentUserForWinAction] = useState<UserData | null>(null);
+  const [dealerId, setDealerId] = useState<number>(1);
+
+  const handleSetDealer = (userId: number) => {
+    setDealerId(userId);
+  };
 
   const handleOpenWinActionDialog = (user: UserData) => {
     setCurrentUserForWinAction(user);
@@ -145,11 +151,15 @@ export default function Home() {
   const memoizedTableBody = useMemo(() => (
     <TableBody>
       {users.map((user) => {
+        const isDealer = user.id === dealerId;
         return (
-          <TableRow key={user.id}>
+          <TableRow key={user.id} className={cn(isDealer && "bg-primary/10")}>
             <TableCell className="font-semibold text-foreground/90 align-top p-2">
               <div className="flex flex-col gap-2 items-start">
                 <div className="flex items-center gap-2">
+                  <button onClick={() => handleSetDealer(user.id)} className="p-1 rounded-md hover:bg-primary/20">
+                    <Crown className={cn("h-4 w-4 text-primary", isDealer ? "fill-yellow-400 text-yellow-600" : "text-gray-400")} />
+                  </button>
                   <Users className="h-4 w-4 text-primary"/>
                   {user.name}
                 </div>
@@ -175,7 +185,7 @@ export default function Home() {
         );
       })}
     </TableBody>
-  ), [users, totalScores]);
+  ), [users, totalScores, dealerId]);
 
   const tableOpponentHeaders = useMemo(() => {
     return (
