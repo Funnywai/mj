@@ -1,62 +1,84 @@
 'use client';
 
+import { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { TriangleAlert } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
+interface UserData {
+    id: number;
+    name: string;
+}
 
 interface ScoresToReset {
   winnerName: string;
-  scores: { opponentName: string; score: number }[];
+  winnerId: number;
+  scores: { [opponentId: number]: number };
 }
 
 interface ResetScoresDialogProps {
   isOpen: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onClose: () => void;
   scoresToReset: ScoresToReset | null;
+  users: UserData[];
 }
 
-export function ResetScoresDialog({ isOpen, onConfirm, onCancel, scoresToReset }: ResetScoresDialogProps) {
+export function ResetScoresDialog({ isOpen, onClose, scoresToReset, users }: ResetScoresDialogProps) {
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000); // Auto-close after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, onClose]);
+    
   if (!scoresToReset) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onCancel}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>New Winner!</DialogTitle>
           <DialogDescription>
-            A new player has won, which will reset the previous winning streak.
+            A new player has won. The previous winner's scores are being reset.
           </DialogDescription>
         </DialogHeader>
-        <Alert variant="destructive">
-            <TriangleAlert className="h-4 w-4" />
-            <AlertTitle>Confirm Score Reset</AlertTitle>
-            <AlertDescription>
-                The following scores from <strong>{scoresToReset.winnerName}</strong> will be erased. Do you want to continue?
-                <ul className="mt-2 list-disc pl-5 space-y-1">
-                    {scoresToReset.scores.map((item, index) => (
-                        <li key={index}>vs {item.opponentName}: {item.score}</li>
-                    ))}
-                </ul>
-            </AlertDescription>
-        </Alert>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel Action
-          </Button>
-          <Button type="submit" variant="destructive" onClick={onConfirm}>
-            Confirm and Reset
-          </Button>
-        </DialogFooter>
+        <div className="py-4">
+            <h4 className="mb-2 font-semibold text-center">Scores from {scoresToReset.winnerName} have been cleared:</h4>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Winner</TableHead>
+                        {users.map(user => (
+                            <TableHead key={user.id} className="text-center">{user.name}</TableHead>
+                        ))}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <TableRow>
+                        <TableCell className="font-semibold">{scoresToReset.winnerName}</TableCell>
+                        {users.map(user => (
+                            <TableCell key={user.id} className="text-center font-semibold text-destructive">
+                                {scoresToReset.winnerId === user.id ? '-' : (scoresToReset.scores[user.id] || 0).toLocaleString()}
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </div>
       </DialogContent>
     </Dialog>
   );

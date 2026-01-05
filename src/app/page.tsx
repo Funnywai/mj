@@ -48,13 +48,6 @@ interface GameState {
   scoreChanges: ScoreChange[];
 }
 
-type PendingWinAction = {
-  type: 'win' | 'zimo';
-  mainUserId: number;
-  targetUserId?: number;
-  value: number;
-} | null;
-
 const generateInitialUsers = (): UserData[] => {
   const userCount = 4;
   return Array.from({ length: userCount }, (_, i) => ({
@@ -98,7 +91,6 @@ export default function Home() {
 
   
   const [currentUserForWinAction, setCurrentUserForWinAction] = useState<UserData | null>(null);
-  const [pendingWinAction, setPendingWinAction] = useState<PendingWinAction>(null);
 
   const [dealerId, setDealerId] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -200,6 +192,11 @@ export default function Home() {
     value: number,
     targetUserId?: number
   ) => {
+    const isNewWinner = mainUserId !== lastWinnerId && lastWinnerId !== null;
+    if (isNewWinner) {
+        setIsResetScoresDialogOpen(true);
+    }
+
     if (targetUserId) {
         // "食胡" case
         const winner = users.find(u => u.id === mainUserId);
@@ -234,8 +231,6 @@ export default function Home() {
         updateLaCounts(mainUserId, [targetUserId]);
 
         setUsers(prevUsers => {
-          const isNewWinner = mainUserId !== lastWinnerId;
-          
           let updatedUsers = prevUsers.map(user => {
               if (isNewWinner && user.id !== mainUserId) {
                   return { ...user, winValues: {} };
@@ -311,8 +306,6 @@ export default function Home() {
         updateLaCounts(mainUserId, opponentIds);
 
         setUsers(prevUsers => {
-            const isNewWinner = mainUserId !== lastWinnerId;
-            
             let updatedUsers = prevUsers.map(user => {
               if (isNewWinner && user.id !== mainUserId) {
                   return { ...user, winValues: {} };
@@ -348,44 +341,12 @@ export default function Home() {
   };
 
   const handleSaveWinAction = (mainUserId: number, targetUserId: number, value: number) => {
-    const isNewWinner = mainUserId !== lastWinnerId && lastWinnerId !== null;
-
-    if (isNewWinner) {
-      setPendingWinAction({ type: 'win', mainUserId, targetUserId, value });
-      setIsResetScoresDialogOpen(true);
-      return;
-    }
-
     executeWinAction(mainUserId, value, targetUserId);
   };
   
-const handleSaveZimoAction = (mainUserId: number, value: number) => {
-    const isNewWinner = mainUserId !== lastWinnerId && lastWinnerId !== null;
-
-    if (isNewWinner) {
-      setPendingWinAction({ type: 'zimo', mainUserId, value });
-      setIsResetScoresDialogOpen(true);
-      return;
-    }
-
+  const handleSaveZimoAction = (mainUserId: number, value: number) => {
     executeWinAction(mainUserId, value);
-};
-
-const handleConfirmReset = () => {
-    if (pendingWinAction) {
-        if (pendingWinAction.type === 'win' && pendingWinAction.targetUserId) {
-            executeWinAction(pendingWinAction.mainUserId, pendingWinAction.value, pendingWinAction.targetUserId);
-        } else if (pendingWinAction.type === 'zimo') {
-            executeWinAction(pendingWinAction.mainUserId, pendingWinAction.value);
-        }
-    }
-    handleCancelReset();
-};
-
-const handleCancelReset = () => {
-    setIsResetScoresDialogOpen(false);
-    setPendingWinAction(null);
-};
+  };
   
   const handleSaveUserNames = (updatedUsers: { id: number; name: string }[]) => {
     setUsers((prevUsers) => {
@@ -458,6 +419,28 @@ const handleCancelReset = () => {
     return scores;
   }, [history, users]);
 
+  const scoresToReset = useMemo(() => {
+    if (!lastWinnerId) return null;
+    const lastWinner = users.find(u => u.id === lastWinnerId);
+    if (!lastWinner) return null;
+    
+    const scores = Object.keys(lastWinner.winValues).reduce((acc, opponentId) => {
+      const score = lastWinner.winValues[parseInt(opponentId)];
+      if (score > 0) {
+        acc[parseInt(opponentId)] = score;
+      }
+      return acc;
+    }, {} as { [opponentId: number]: number });
+  
+    if (Object.keys(scores).length === 0) return null;
+
+    return {
+      winnerName: lastWinner.name,
+      winnerId: lastWinner.id,
+      scores,
+    };
+  }, [lastWinnerId, users]);
+
   const memoizedTableBody = useMemo(() => (
     <TableBody>
       {users.map((user) => {
@@ -514,27 +497,6 @@ const handleCancelReset = () => {
         })
     );
   }, [users, laCounts, lastWinnerId]);
-
-  const scoresToReset = useMemo(() => {
-    if (!lastWinnerId) return null;
-    const lastWinner = users.find(u => u.id === lastWinnerId);
-    if (!lastWinner) return null;
-
-    const scores: { opponentName: string; score: number }[] = [];
-    Object.entries(lastWinner.winValues).forEach(([opponentId, score]) => {
-      if (score > 0) {
-        const opponent = users.find(u => u.id === parseInt(opponentId));
-        if (opponent) {
-          scores.push({ opponentName: opponent.name, score });
-        }
-      }
-    });
-
-    return {
-      winnerName: lastWinner.name,
-      scores,
-    };
-  }, [lastWinnerId, users]);
 
   if (!isClient) {
     return null; // Or a loading spinner
@@ -622,9 +584,9 @@ const handleCancelReset = () => {
       {scoresToReset && (
         <ResetScoresDialog
             isOpen={isResetScoresDialogOpen}
-            onCancel={handleCancelReset}
-            onConfirm={handleConfirmReset}
+            onClose={() => setIsResetScoresDialogOpen(false)}
             scoresToReset={scoresToReset}
+            users={users}
         />
       )}
 
