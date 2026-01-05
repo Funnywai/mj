@@ -164,7 +164,6 @@ export default function Home() {
     dealerId?: number;
     consecutiveWins?: number;
     laCounts?: LaCounts;
-    currentWinnerId?: number | null;
   }) => {
     if (isClient) {
       if (data.users !== undefined) localStorage.setItem('mahjong-users', JSON.stringify(data.users));
@@ -172,7 +171,6 @@ export default function Home() {
       if (data.dealerId !== undefined) localStorage.setItem('mahjong-dealerId', JSON.stringify(data.dealerId));
       if (data.consecutiveWins !== undefined) localStorage.setItem('mahjong-consecutiveWins', JSON.stringify(data.consecutiveWins));
       if (data.laCounts !== undefined) localStorage.setItem('mahjong-laCounts', JSON.stringify(data.laCounts));
-      if (data.currentWinnerId !== undefined) localStorage.setItem('mahjong-currentWinnerId', JSON.stringify(data.currentWinnerId));
     }
   };
 
@@ -433,8 +431,11 @@ export default function Home() {
       dealerId: newDealerId,
       consecutiveWins: newConsecutiveWins,
       laCounts: newLaCounts,
-      currentWinnerId: mainUserId,
     });
+    if (isClient) {
+      localStorage.setItem('mahjong-currentWinnerId', JSON.stringify(mainUserId));
+    }
+
 
     setIsWinActionDialogOpen(false);
   };
@@ -480,8 +481,10 @@ export default function Home() {
         dealerId: newDealerId,
         consecutiveWins: newConsecutiveWins,
         laCounts: newLaCounts,
-        currentWinnerId: newCurrentWinnerId,
     });
+    if (isClient) {
+      localStorage.removeItem('mahjong-currentWinnerId');
+    }
   };
 
   const handleRestore = () => {
@@ -502,8 +505,10 @@ export default function Home() {
           dealerId: lastState.dealerId,
           consecutiveWins: lastState.consecutiveWins,
           laCounts: lastState.laCounts,
-          currentWinnerId: lastState.currentWinnerId,
       });
+      if (isClient) {
+        localStorage.setItem('mahjong-currentWinnerId', JSON.stringify(lastState.currentWinnerId));
+      }
 
       toast({ description: "Last action restored." });
     } else {
@@ -613,7 +618,7 @@ export default function Home() {
               </div>
             </TableCell>
             {users.map(opponent => (
-                <TableCell key={opponent.id} className="font-semibold text-center text-accent text-base transition-all duration-300 p-2">
+                <TableCell key={opponent.id} className="font-semibold text-center text-green-600 text-base transition-all duration-300 p-2">
                     {(user.winValues[opponent.id] || 0).toLocaleString()}
                 </TableCell>
             ))}
