@@ -535,6 +535,15 @@ export default function Home() {
     const scoreToReset = winner.winValues[loserId] || 0;
     if (scoreToReset === 0) return;
   
+    // Capture the state BEFORE any changes for the history log.
+    const currentStateForHistory: Omit<GameState, 'action' | 'scoreChanges'> = {
+      users: JSON.parse(JSON.stringify(users)),
+      laCounts: JSON.parse(JSON.stringify(laCounts)),
+      currentWinnerId,
+      dealerId,
+      consecutiveWins,
+    };
+  
     const newLaCounts = { ...laCounts };
     if (newLaCounts[currentWinnerId]) {
       newLaCounts[currentWinnerId][loserId] = 0;
@@ -550,15 +559,19 @@ export default function Home() {
       return user;
     });
     setUsers(newUsers);
-
+  
+    const actionDescription = `${loser.name} 投降 to ${winner.name}`;
+    const newHistory = saveStateToHistory(actionDescription, [], currentStateForHistory);
+  
     saveGameData({
-        users: newUsers,
-        laCounts: newLaCounts
+      users: newUsers,
+      history: newHistory,
+      laCounts: newLaCounts,
     });
   
     toast({
-        title: "Surrendered!",
-        description: `${loser.name} has surrendered to ${winner.name}. Score has been reset.`,
+      title: "Surrendered!",
+      description: `${loser.name} has surrendered to ${winner.name}. Score has been reset.`,
     });
   };
 
