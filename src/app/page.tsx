@@ -681,12 +681,12 @@ export default function Home() {
                     <Button variant="outline" size="sm" onClick={handleRestore} disabled={history.length === 0}>
                         <HistoryIcon className="mr-2 h-4 w-4" /> 還原
                     </Button>
+                    <Button variant="outline" size="sm" onClick={handleReset}>
+                        <RefreshCw className="mr-2 h-4 w-4" /> 重置
+                    </Button>
                 </div>
                 <CollapsibleContent className="w-full">
                     <div className="flex gap-2 flex-wrap justify-center mt-2">
-                        <Button variant="outline" size="sm" onClick={handleReset}>
-                            <RefreshCw className="mr-2 h-4 w-4" /> 重置
-                        </Button>
                         <Button variant="outline" size="sm" onClick={() => setIsHistoryDialogOpen(true)} disabled={history.length === 0} >
                             <List className="mr-2 h-4 w-4" /> 歷史記錄
                         </Button>

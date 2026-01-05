@@ -11,13 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 interface UserData {
   id: number;
@@ -60,19 +53,18 @@ export function WinActionDialog({ isOpen, onClose, mainUser, users, onSave }: Wi
         </DialogHeader>
         <div className="py-4 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="target-user">Select User</Label>
-            <Select onValueChange={setTargetUserId} value={targetUserId}>
-                <SelectTrigger id="target-user">
-                    <SelectValue placeholder="Select a user to apply the action" />
-                </SelectTrigger>
-                <SelectContent>
-                    {users.map(user => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                            {user.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <Label>Select User</Label>
+            <div className="grid grid-cols-3 gap-2">
+                {users.map(user => (
+                    <Button
+                        key={user.id}
+                        variant={targetUserId === user.id.toString() ? 'default' : 'outline'}
+                        onClick={() => setTargetUserId(user.id.toString())}
+                    >
+                        {user.name}
+                    </Button>
+                ))}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="value-input">Enter Number</Label>
