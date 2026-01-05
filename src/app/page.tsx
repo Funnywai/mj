@@ -466,28 +466,32 @@ export default function Home() {
 
   const handleRestore = () => {
     if (history.length > 0) {
-      const lastState = history[history.length - 1];
-      setUndoneHistory(prev => [lastState, ...prev]);
+      const newHistory = [...history];
+      const lastState = newHistory.pop();
+      if (lastState) {
+        setUndoneHistory(prev => [lastState, ...prev]);
+        
+        const previousState = newHistory.length > 0 ? newHistory[newHistory.length - 1] : null;
 
-      const previousState = history[history.length - 2];
-      if (previousState) {
-        setUsers(previousState.users);
-        setLaCounts(previousState.laCounts);
-        setLastWinnerId(previousState.lastWinnerId);
-        setDealerId(previousState.dealerId);
-        setConsecutiveWins(previousState.consecutiveWins);
-      } else {
-        // If there's no previous state, reset to initial
-        const initialUsersState = generateInitialUsers();
-        setUsers(initialUsersState);
-        setLaCounts({});
-        setLastWinnerId(null);
-        setDealerId(initialUsersState[0].id);
-        setConsecutiveWins(1);
+        if (previousState) {
+          setUsers(previousState.users);
+          setLaCounts(previousState.laCounts);
+          setLastWinnerId(previousState.lastWinnerId);
+          setDealerId(previousState.dealerId);
+          setConsecutiveWins(previousState.consecutiveWins);
+        } else {
+          // If there's no previous state, reset to initial
+          const initialUsersState = generateInitialUsers();
+          setUsers(initialUsersState);
+          setLaCounts({});
+          setLastWinnerId(null);
+          setDealerId(initialUsersState[0].id);
+          setConsecutiveWins(1);
+        }
       }
 
-      setHistory(prev => prev.slice(0, prev.length - 1));
-       toast({
+      setHistory(newHistory);
+      toast({
         description: "Last action restored.",
       });
     } else {
