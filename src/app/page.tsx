@@ -211,21 +211,15 @@ export default function Home() {
     if (isNewWinner) {
         const previousWinner = users.find(u => u.id === lastWinnerId);
         if (previousWinner) {
-            const scores = Object.keys(previousWinner.winValues).reduce((acc, opponentId) => {
-                const score = previousWinner.winValues[parseInt(opponentId)];
-                if (score > 0) {
-                    acc[parseInt(opponentId)] = score;
-                }
-                return acc;
-            }, {} as { [opponentId: number]: number });
+            const hasScores = Object.values(previousWinner.winValues).some(score => score > 0);
 
-            if (Object.keys(scores).length > 0) {
+            if (hasScores) {
                 setScoresToReset({
                     previousWinnerName: previousWinner.name,
                     previousWinnerId: previousWinner.id,
                     currentWinnerName: currentWinner?.name || '',
                     currentWinnerId: mainUserId,
-                    scores,
+                    scores: previousWinner.winValues,
                 });
                 setIsResetScoresDialogOpen(true);
             }
@@ -546,19 +540,19 @@ export default function Home() {
         <header className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setIsRenameDialogOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" /> Rename
+              <Pencil className="mr-2 h-4 w-4" /> 改名
             </Button>
             <Button variant="outline" size="sm" onClick={() => setIsSeatChangeDialogOpen(true)}>
               <Shuffle className="mr-2 h-4 w-4" /> 換位
             </Button>
             <Button variant="outline" size="sm" onClick={handleRestore} disabled={history.length === 0}>
-              <HistoryIcon className="mr-2 h-4 w-4" /> Restore
+              <HistoryIcon className="mr-2 h-4 w-4" /> 還原
             </Button>
             <Button variant="outline" size="sm" onClick={handleReset}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Reset
+              <RefreshCw className="mr-2 h-4 w-4" /> 重置
             </Button>
              <Button variant="outline" size="sm" onClick={() => setIsHistoryDialogOpen(true)} disabled={history.length === 0}>
-              <List className="mr-2 h-4 w-4" /> History
+              <List className="mr-2 h-4 w-4" /> 歷史記錄
             </Button>
           </div>
         </header>
