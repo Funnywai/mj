@@ -521,21 +521,18 @@ export default function Home() {
 
   const handleSurrender = (loserId: number) => {
     if (!lastWinnerId) return;
-
+  
     const winner = users.find(u => u.id === lastWinnerId);
     const loser = users.find(u => u.id === loserId);
-
+  
     if (!winner || !loser) return;
-
+  
     const scoreToReset = winner.winValues[loserId] || 0;
     if (scoreToReset === 0) return;
-
+  
     const actionDescription = `${loser.name} 投降 to ${winner.name}`;
-    const scoreChanges: ScoreChange[] = [
-      { userId: winner.id, change: -scoreToReset },
-      { userId: loser.id, change: scoreToReset },
-    ];
-    saveStateToHistory(actionDescription, scoreChanges);
+    // Pass empty scoreChanges so it doesn't affect total scores
+    saveStateToHistory(actionDescription, []);
     
     setLaCounts(prev => {
         const newLaCounts = JSON.parse(JSON.stringify(prev));
@@ -544,7 +541,7 @@ export default function Home() {
         }
         return newLaCounts;
     });
-
+  
     setUsers(prev => {
         return prev.map(user => {
             if (user.id === lastWinnerId) {
@@ -555,7 +552,7 @@ export default function Home() {
             return user;
         })
     });
-
+  
     toast({
         title: "Surrendered!",
         description: `${loser.name} has surrendered to ${winner.name}. Score has been reset.`,
