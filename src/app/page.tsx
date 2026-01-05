@@ -100,13 +100,6 @@ export default function Home() {
     }
     return [];
   });
-   const [undoneHistory, setUndoneHistory] = useState<GameState[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedUndoneHistory = localStorage.getItem('mahjong-undone-history');
-      return savedUndoneHistory ? JSON.parse(savedUndoneHistory) : [];
-    }
-    return [];
-  });
   const { toast } = useToast();
 
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -181,7 +174,6 @@ export default function Home() {
       localStorage.setItem('mahjong-consecutiveWins', JSON.stringify(data.consecutiveWins));
       localStorage.setItem('mahjong-currentWinnerId', JSON.stringify(data.currentWinnerId));
       localStorage.setItem('mahjong-laCounts', JSON.stringify(data.laCounts));
-      localStorage.setItem('mahjong-undone-history', JSON.stringify([])); // Clear redo on new action
     }
   };
 
@@ -194,7 +186,6 @@ export default function Home() {
     };
     const newHistory = [...history, newHistoryEntry];
     setHistory(newHistory);
-    setUndoneHistory([]);
     return newHistory;
   };
 
@@ -513,7 +504,6 @@ export default function Home() {
     setHistory(newHistory);
     setDealerId(newDealerId);
     setConsecutiveWins(newConsecutiveWins);
-    setUndoneHistory([]);
 
     saveGameData({
         users: newUsers,
@@ -528,11 +518,11 @@ export default function Home() {
   const handleRestore = () => {
     if (history.length > 0) {
       const newHistory = [...history];
-      const lastState = newHistory.pop();
+      newHistory.pop();
       
-      if (lastState) {
-        setUndoneHistory(prev => [lastState, ...prev]);
+      const lastState = newHistory[newHistory.length - 1];
 
+      if (lastState) {
         setUsers(lastState.users);
         setLaCounts(lastState.laCounts);
         setCurrentWinnerId(lastState.currentWinnerId);
@@ -550,40 +540,15 @@ export default function Home() {
         });
 
         toast({ description: "Last action restored." });
+      } else {
+        handleReset();
+        toast({ description: "History is empty. Game has been reset." });
       }
     } else {
       toast({ description: "No actions to restore." });
     }
   };
 
-  const handleRedo = () => {
-    if (undoneHistory.length > 0) {
-      const nextState = undoneHistory[0];
-      const newUndoneHistory = undoneHistory.slice(1);
-      const newHistory = [...history, nextState];
-
-      setHistory(newHistory);
-      setUsers(nextState.users);
-      setLaCounts(nextState.laCounts);
-      setCurrentWinnerId(nextState.currentWinnerId);
-      setDealerId(nextState.dealerId);
-      setConsecutiveWins(nextState.consecutiveWins);
-      setUndoneHistory(newUndoneHistory);
-
-      saveGameData({
-        users: nextState.users,
-        history: newHistory,
-        dealerId: nextState.dealerId,
-        consecutiveWins: nextState.consecutiveWins,
-        currentWinnerId: nextState.currentWinnerId,
-        laCounts: nextState.laCounts,
-      });
-
-      toast({ description: "Redo successful." });
-    } else {
-      toast({ description: "No actions to redo." });
-    }
-  };
 
   const handleSurrender = (loserId: number) => {
     if (!currentWinnerId) return;
@@ -668,7 +633,7 @@ export default function Home() {
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex items-center gap-1">
                     <button onClick={() => handleSetDealer(user.id)} className={cn("flex items-center justify-center font-bold text-sm w-auto px-1 h-6 rounded-md hover:bg-primary/20 whitespace-nowrap", isDealer ? "bg-yellow-400 text-yellow-800" : "bg-gray-200 text-gray-500")}>
-                      {isDealer && consecutiveWins > 1 ? `連${consecutiveWins}` : ''}莊
+                      {isDealer && consecutiveWins > 1 ? `連${consecutiveWins-1}` : ''}莊
                     </button>
                     {isDealer && (
                       <button onClick={handleManualConsecutiveWin} className="flex items-center justify-center font-bold text-sm w-auto px-2 h-6 rounded-md bg-blue-200 text-blue-800 hover:bg-blue-300 whitespace-nowrap">
@@ -747,9 +712,6 @@ export default function Home() {
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleRestore} disabled={history.length === 0}>
                         <HistoryIcon className="mr-2 h-4 w-4" /> 還原
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleRedo} disabled={undoneHistory.length === 0}>
-                        <Redo2 className="mr-2 h-4 w-4" /> 重做
                     </Button>
                 </div>
                 <CollapsibleContent className="w-full">
