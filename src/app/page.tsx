@@ -88,7 +88,13 @@ export default function Home() {
     }
     return [];
   });
-   const [undoneHistory, setUndoneHistory] = useState<GameState[]>([]);
+   const [undoneHistory, setUndoneHistory] = useState<GameState[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedUndoneHistory = localStorage.getItem('mahjong-undone-history');
+      return savedUndoneHistory ? JSON.parse(savedUndoneHistory) : [];
+    }
+    return [];
+  });
   const { toast } = useToast();
 
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -141,8 +147,9 @@ export default function Home() {
       localStorage.setItem('mahjong-consecutiveWins', JSON.stringify(consecutiveWins));
       localStorage.setItem('mahjong-lastWinnerId', JSON.stringify(lastWinnerId));
       localStorage.setItem('mahjong-laCounts', JSON.stringify(laCounts));
+      localStorage.setItem('mahjong-undone-history', JSON.stringify(undoneHistory));
     }
-  }, [users, history, dealerId, consecutiveWins, lastWinnerId, laCounts, isClient]);
+  }, [users, history, dealerId, consecutiveWins, lastWinnerId, laCounts, undoneHistory, isClient]);
   
   const saveStateToHistory = (action: string, scoreChanges: ScoreChange[]) => {
     const currentState: GameState = {
@@ -444,16 +451,28 @@ export default function Home() {
         lastWinnerId,
         dealerId,
         consecutiveWins,
-        action: 'Redo State',
-        scoreChanges: [],
+        action: 'Redo State', // This action label is for the state being moved TO undone
+        scoreChanges: [], // This is not a real game action, so no score changes.
       };
-      setUndoneHistory(prev => [currentState, ...prev]);
+      setUndoneHistory(prev => [lastState, ...prev]);
 
-      setUsers(lastState.users);
-      setLaCounts(lastState.laCounts);
-      setLastWinnerId(lastState.lastWinnerId);
-      setDealerId(lastState.dealerId);
-      setConsecutiveWins(lastState.consecutiveWins);
+      const previousState = history[history.length - 2];
+      if (previousState) {
+        setUsers(previousState.users);
+        setLaCounts(previousState.laCounts);
+        setLastWinnerId(previousState.lastWinnerId);
+        setDealerId(previousState.dealerId);
+        setConsecutiveWins(previousState.consecutiveWins);
+      } else {
+        // If there's no previous state, reset to initial
+        const initialUsersState = generateInitialUsers();
+        setUsers(initialUsersState);
+        setLaCounts({});
+        setLastWinnerId(null);
+        setDealerId(initialUsersState[0].id);
+        setConsecutiveWins(1);
+      }
+      
       setHistory(prev => prev.slice(0, prev.length - 1));
        toast({
         description: "Last action restored.",
@@ -468,7 +487,7 @@ export default function Home() {
   const handleRedo = () => {
     if (undoneHistory.length > 0) {
       const nextState = undoneHistory[0];
-      saveStateToHistory(nextState.action, nextState.scoreChanges);
+      setHistory(prev => [...prev, nextState]);
       
       setUsers(nextState.users);
       setLaCounts(nextState.laCounts);
