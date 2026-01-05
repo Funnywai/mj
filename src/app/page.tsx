@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { RefreshCw, Users, Pencil, History as HistoryIcon, List, Shuffle } from 'lucide-react';
+import { RefreshCw, Users, Pencil, History as HistoryIcon, List, Shuffle, Redo2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { RenameDialog } from '@/app/components/rename-dialog';
 import { WinActionDialog } from '@/app/components/win-action-dialog';
@@ -88,6 +88,7 @@ export default function Home() {
     }
     return [];
   });
+   const [undoneHistory, setUndoneHistory] = useState<GameState[]>([]);
   const { toast } = useToast();
 
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -154,6 +155,7 @@ export default function Home() {
       scoreChanges,
     };
     setHistory(prev => [...prev, currentState]);
+    setUndoneHistory([]);
   };
 
   const handleSetDealer = (userId: number) => {
@@ -430,11 +432,23 @@ export default function Home() {
     setHistory([]);
     setDealerId(users[0]?.id || 1);
     setConsecutiveWins(1);
+    setUndoneHistory([]);
   };
 
   const handleRestore = () => {
     if (history.length > 0) {
       const lastState = history[history.length - 1];
+      const currentState: GameState = {
+        users: JSON.parse(JSON.stringify(users)),
+        laCounts: JSON.parse(JSON.stringify(laCounts)),
+        lastWinnerId,
+        dealerId,
+        consecutiveWins,
+        action: 'Redo State',
+        scoreChanges: [],
+      };
+      setUndoneHistory(prev => [currentState, ...prev]);
+
       setUsers(lastState.users);
       setLaCounts(lastState.laCounts);
       setLastWinnerId(lastState.lastWinnerId);
@@ -447,6 +461,28 @@ export default function Home() {
     } else {
       toast({
         description: "No actions to restore.",
+      });
+    }
+  };
+
+  const handleRedo = () => {
+    if (undoneHistory.length > 0) {
+      const nextState = undoneHistory[0];
+      saveStateToHistory(nextState.action, nextState.scoreChanges);
+      
+      setUsers(nextState.users);
+      setLaCounts(nextState.laCounts);
+      setLastWinnerId(nextState.lastWinnerId);
+      setDealerId(nextState.dealerId);
+      setConsecutiveWins(nextState.consecutiveWins);
+      
+      setUndoneHistory(prev => prev.slice(1));
+      toast({
+        description: "Redo successful.",
+      });
+    } else {
+      toast({
+        description: "No actions to redo.",
       });
     }
   };
@@ -547,6 +583,9 @@ export default function Home() {
             </Button>
             <Button variant="outline" size="sm" onClick={handleRestore} disabled={history.length === 0}>
               <HistoryIcon className="mr-2 h-4 w-4" /> 還原
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRedo} disabled={undoneHistory.length === 0}>
+              <Redo2 className="mr-2 h-4 w-4" /> 重做
             </Button>
             <Button variant="outline" size="sm" onClick={handleReset}>
               <RefreshCw className="mr-2 h-4 w-4" /> 重置
