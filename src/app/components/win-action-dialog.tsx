@@ -22,25 +22,37 @@ interface WinActionDialogProps {
   onClose: () => void;
   mainUser: UserData;
   users: UserData[];
-  onSave: (mainUserId: number, targetUserId: number, value: number) => void;
+  onSave: (mainUserId: number, value: number, targetUserId?: number) => void;
 }
 
 export function WinActionDialog({ isOpen, onClose, mainUser, users, onSave }: WinActionDialogProps) {
-  const [targetUserId, setTargetUserId] = useState<string>('');
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
+  const [isZimo, setIsZimo] = useState(false);
   const [value, setValue] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
-      setTargetUserId('');
+      setTargetUserId(null);
+      setIsZimo(false);
       setValue('');
     }
   }, [isOpen]);
 
   const handleSave = () => {
-    if (targetUserId && value) {
-      onSave(mainUser.id, parseInt(targetUserId, 10), parseInt(value, 10));
+    if (value && (targetUserId || isZimo)) {
+      onSave(mainUser.id, parseInt(value, 10), isZimo ? undefined : parseInt(targetUserId!, 10));
       onClose();
     }
+  };
+
+  const handleUserSelect = (userId: string) => {
+    setTargetUserId(userId);
+    setIsZimo(false);
+  };
+  
+  const handleZimoSelect = () => {
+    setIsZimo(true);
+    setTargetUserId(null);
   };
 
   if (!mainUser) return null;
@@ -49,21 +61,28 @@ export function WinActionDialog({ isOpen, onClose, mainUser, users, onSave }: Wi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>食胡 - {mainUser.name}</DialogTitle>
+          <DialogTitle>食 - {mainUser.name}</DialogTitle>
         </DialogHeader>
         <div className="py-4 space-y-4">
           <div className="space-y-2">
-            <Label>Select User</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <Label>Select Action</Label>
+            <div className="grid grid-cols-4 gap-2">
                 {users.map(user => (
                     <Button
                         key={user.id}
                         variant={targetUserId === user.id.toString() ? 'default' : 'outline'}
-                        onClick={() => setTargetUserId(user.id.toString())}
+                        onClick={() => handleUserSelect(user.id.toString())}
                     >
                         {user.name}
                     </Button>
                 ))}
+                 <Button
+                    key="zimo"
+                    variant={isZimo ? 'default' : 'outline'}
+                    onClick={handleZimoSelect}
+                >
+                    自摸
+                </Button>
             </div>
           </div>
           <div className="space-y-2">

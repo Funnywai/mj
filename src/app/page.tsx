@@ -26,7 +26,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { RenameDialog } from '@/app/components/rename-dialog';
 import { WinActionDialog } from '@/app/components/win-action-dialog';
-import { ZimoActionDialog } from '@/app/components/zimo-action-dialog';
 import { HistoryDialog } from '@/app/components/history-dialog';
 import { SeatChangeDialog } from '@/app/components/seat-change-dialog';
 import { ResetScoresDialog } from '@/app/components/reset-scores-dialog';
@@ -104,7 +103,6 @@ export default function Home() {
 
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isWinActionDialogOpen, setIsWinActionDialogOpen] = useState(false);
-  const [isZimoActionDialogOpen, setIsZimoActionDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [isSeatChangeDialogOpen, setIsSeatChangeDialogOpen] = useState(false);
   const [isResetScoresDialogOpen, setIsResetScoresDialogOpen] = useState(false);
@@ -211,11 +209,6 @@ export default function Home() {
   const handleOpenWinActionDialog = (user: UserData) => {
     setCurrentUserForWinAction(user);
     setIsWinActionDialogOpen(true);
-  };
-
-  const handleOpenZimoActionDialog = (user: UserData) => {
-    setCurrentUserForWinAction(user);
-    setIsZimoActionDialogOpen(true);
   };
 
   const handleWin = (winnerId: number, currentDealerId: number, currentConsecutiveWins: number) => {
@@ -444,15 +437,10 @@ export default function Home() {
     });
 
     setIsWinActionDialogOpen(false);
-    setIsZimoActionDialogOpen(false);
   };
 
-  const handleSaveWinAction = (mainUserId: number, targetUserId: number, value: number) => {
+  const handleSaveWinAction = (mainUserId: number, value: number, targetUserId?: number) => {
     executeWinAction(mainUserId, value, targetUserId);
-  };
-
-  const handleSaveZimoAction = (mainUserId: number, value: number) => {
-    executeWinAction(mainUserId, value);
   };
 
   const handleSaveUserNames = (updatedUsers: { id: number; name: string }[]) => {
@@ -616,10 +604,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col items-stretch gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleOpenWinActionDialog(user)}>
-                     食胡
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleOpenZimoActionDialog(user)}>
-                     自摸
+                     食
                   </Button>
                 </div>
                 <div className="font-bold text-lg mt-1">
@@ -747,14 +732,6 @@ export default function Home() {
           mainUser={currentUserForWinAction}
           users={users.filter(u => u.id !== currentUserForWinAction.id)}
           onSave={handleSaveWinAction}
-        />
-       )}
-      {currentUserForWinAction && (
-        <ZimoActionDialog
-          isOpen={isZimoActionDialogOpen}
-          onClose={() => setIsZimoActionDialogOpen(false)}
-          mainUser={currentUserForWinAction}
-          onSave={handleSaveZimoAction}
         />
        )}
        <HistoryDialog
