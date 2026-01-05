@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Table,
@@ -22,8 +21,9 @@ interface UserData {
 }
 
 interface ScoresToReset {
-  winnerName: string;
-  winnerId: number;
+  previousWinnerName: string;
+  previousWinnerId: number;
+  currentWinnerName: string;
   scores: { [opponentId: number]: number };
 }
 
@@ -41,13 +41,9 @@ export function ResetScoresDialog({ isOpen, onClose, scoresToReset, users }: Res
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>New Winner!</DialogTitle>
-          <DialogDescription>
-            A new player has won. The previous winner's scores are being reset.
-          </DialogDescription>
+          <DialogTitle>{scoresToReset.previousWinnerName} 收 {scoresToReset.currentWinnerName}</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-            <h4 className="mb-2 font-semibold text-center">Scores from {scoresToReset.winnerName} have been cleared:</h4>
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -59,10 +55,10 @@ export function ResetScoresDialog({ isOpen, onClose, scoresToReset, users }: Res
                 </TableHeader>
                 <TableBody>
                     <TableRow>
-                        <TableCell className="font-semibold">{scoresToReset.winnerName}</TableCell>
+                        <TableCell className="font-semibold">{scoresToReset.previousWinnerName}</TableCell>
                         {users.map(user => (
                             <TableCell key={user.id} className="text-center font-semibold text-destructive">
-                                {scoresToReset.winnerId === user.id ? '-' : (scoresToReset.scores[user.id] || 0).toLocaleString()}
+                                {scoresToReset.previousWinnerId === user.id ? '-' : (scoresToReset.scores[user.id] || 0).toLocaleString()}
                             </TableCell>
                         ))}
                     </TableRow>

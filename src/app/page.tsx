@@ -60,8 +60,9 @@ const generateInitialUsers = (): UserData[] => {
 const initialUsers = generateInitialUsers();
 
 interface ScoresToReset {
-  winnerName: string;
-  winnerId: number;
+  previousWinnerName: string;
+  previousWinnerId: number;
+  currentWinnerName: string;
   scores: { [opponentId: number]: number };
 }
 
@@ -201,6 +202,7 @@ export default function Home() {
     targetUserId?: number
   ) => {
     const isNewWinner = mainUserId !== lastWinnerId && lastWinnerId !== null;
+    const currentWinner = users.find(u => u.id === mainUserId);
     if (isNewWinner) {
         const previousWinner = users.find(u => u.id === lastWinnerId);
         if (previousWinner) {
@@ -214,8 +216,9 @@ export default function Home() {
 
             if (Object.keys(scores).length > 0) {
                 setScoresToReset({
-                    winnerName: previousWinner.name,
-                    winnerId: previousWinner.id,
+                    previousWinnerName: previousWinner.name,
+                    previousWinnerId: previousWinner.id,
+                    currentWinnerName: currentWinner?.name || '',
                     scores,
                 });
                 setIsResetScoresDialogOpen(true);
@@ -503,7 +506,7 @@ export default function Home() {
   }, [users, laCounts, lastWinnerId]);
 
   if (!isClient) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   return (
