@@ -471,22 +471,27 @@ export default function Home() {
       if (lastState) {
         setUndoneHistory(prev => [lastState, ...prev]);
         
-        const previousState = newHistory.length > 0 ? newHistory[newHistory.length - 1] : null;
+        const stateToRestore = newHistory[newHistory.length - 1] || {
+            users: initialUsers,
+            laCounts: {},
+            lastWinnerId: null,
+            dealerId: 1,
+            consecutiveWins: 1
+        };
 
-        if (previousState) {
-          setUsers(previousState.users);
-          setLaCounts(previousState.laCounts);
-          setLastWinnerId(previousState.lastWinnerId);
-          setDealerId(previousState.dealerId);
-          setConsecutiveWins(previousState.consecutiveWins);
+        if(newHistory.length > 0) {
+            const previousState = newHistory[newHistory.length-1];
+            setUsers(previousState.users);
+            setLaCounts(previousState.laCounts);
+            setLastWinnerId(previousState.lastWinnerId);
+            setDealerId(previousState.dealerId);
+            setConsecutiveWins(previousState.consecutiveWins);
         } else {
-          // If there's no previous state, reset to initial
-          const initialUsersState = generateInitialUsers();
-          setUsers(initialUsersState);
-          setLaCounts({});
-          setLastWinnerId(null);
-          setDealerId(initialUsersState[0].id);
-          setConsecutiveWins(1);
+            setUsers(initialUsers.map(u => ({...u, winValues: {}})));
+            setLaCounts({});
+            setLastWinnerId(null);
+            setDealerId(initialUsers[0]?.id || 1);
+            setConsecutiveWins(1);
         }
       }
 
@@ -535,7 +540,6 @@ export default function Home() {
     if (scoreToReset === 0) return;
   
     const actionDescription = `${loser.name} 投降 to ${winner.name}`;
-    // Pass empty scoreChanges so it doesn't affect total scores
     saveStateToHistory(actionDescription, []);
     
     setLaCounts(prev => {
