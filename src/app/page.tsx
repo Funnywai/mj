@@ -544,7 +544,7 @@ export default function Home() {
               <div className="flex flex-col gap-2 items-start">
                 <div className="flex flex-col items-start gap-1">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => handleSetDealer(user.id)} className={cn("flex items-center justify-center font-bold text-sm w-auto px-1 h-6 rounded-md hover:bg-primary/20", isDealer ? "bg-yellow-400 text-yellow-800" : "bg-gray-200 text-gray-500")}>
+                    <button onClick={() => handleSetDealer(user.id)} className={cn("flex items-center justify-center font-bold text-sm w-auto px-1 h-6 rounded-md hover:bg-primary/20 whitespace-nowrap", isDealer ? "bg-yellow-400 text-yellow-800" : "bg-gray-200 text-gray-500")}>
                       {isDealer && consecutiveWins > 1 ? `連${consecutiveWins}` : ''}莊
                     </button>
                     {isDealer && (
@@ -621,12 +621,6 @@ export default function Home() {
                         <Redo2 className="mr-2 h-4 w-4" /> 重做
                     </Button>
                 </div>
-                <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-full">
-                        <ChevronDown className="h-4 w-4" />
-                        <span className="sr-only">Toggle more actions</span>
-                    </Button>
-                </CollapsibleTrigger>
                 <CollapsibleContent className="w-full">
                     <div className="flex gap-2 flex-wrap justify-center mt-2">
                         <Button variant="outline" size="sm" onClick={handleReset}>
@@ -643,6 +637,12 @@ export default function Home() {
                         </Button>
                     </div>
                 </CollapsibleContent>
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full">
+                        <ChevronDown className="h-4 w-4" />
+                        <span className="sr-only">Toggle more actions</span>
+                    </Button>
+                </CollapsibleTrigger>
             </Collapsible>
         </header>
 
@@ -719,5 +719,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
