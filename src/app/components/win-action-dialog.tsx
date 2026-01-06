@@ -185,11 +185,11 @@ export function WinActionDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>食 - {mainUser.name}</DialogTitle>
+          <DialogTitle>食胡</DialogTitle>
         </DialogHeader>
-        <div className="py-4 space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Select Action</Label>
+            <Label>輸家:</Label>
             <div className="grid grid-cols-4 gap-2">
                 {opponentUsers.map(user => (
                     <Button
@@ -210,7 +210,7 @@ export function WinActionDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="value-input">Enter Number</Label>
+            <Label htmlFor="value-input">番數:</Label>
             <Input
               id="value-input"
               type="number"
@@ -241,22 +241,19 @@ export function WinActionDialog({
 
           {scorePreview && (
             <Card className="bg-secondary/50">
-              <CardHeader className="p-4">
-                  <CardTitle className="text-lg">Score Preview</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
+              <CardContent className="p-2 pt-2">
                   <div className="grid grid-cols-4 gap-2 text-center">
                       <div>
-                          <p className="text-sm text-muted-foreground">Base (番)</p>
+                          <p className="text-sm text-muted-foreground">番</p>
                       </div>
                       <div>
-                          <p className="text-sm text-muted-foreground">Dealer (莊)</p>
+                          <p className="text-sm text-muted-foreground">莊</p>
                       </div>
                       <div>
-                          <p className="text-sm text-muted-foreground">Bonus (拉)</p>
+                          <p className="text-sm text-muted-foreground">拉</p>
                       </div>
                       <div>
-                          <p className="text-sm font-bold">Total</p>
+                          <p className="text-sm text-muted-foreground">總</p>
                       </div>
                       <div>
                           <p className="font-semibold text-lg">{scorePreview.base}</p>

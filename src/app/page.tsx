@@ -50,6 +50,10 @@ export interface ScoreChange {
   change: number;
 }
 
+interface Payouts {
+  [opponentId: number]: number;
+}
+
 interface GameState {
   users: UserData[];
   laCounts: LaCounts;
@@ -217,6 +221,51 @@ export default function Home() {
     setCurrentUserForWinAction(user);
     setIsSpecialActionDialogOpen(true);
   };
+
+  const handleExecuteZhaHuAction = (mainUserId: number, payouts: Payouts) => {
+    const currentStateForHistory: Omit<GameState, 'action' | 'scoreChanges'> = {
+      users: JSON.parse(JSON.stringify(users)),
+      laCounts: JSON.parse(JSON.stringify(laCounts)),
+      currentWinnerId,
+      dealerId,
+      consecutiveWins,
+    };
+  
+    const mainUser = users.find(u => u.id === mainUserId);
+    if (!mainUser) return;
+  
+    let totalPayout = 0;
+    const scoreChanges: ScoreChange[] = [];
+  
+    Object.entries(payouts).forEach(([opponentId, amount]) => {
+      const opponentIdNum = parseInt(opponentId, 10);
+      if (amount > 0) {
+        totalPayout += amount;
+        scoreChanges.push({ userId: opponentIdNum, change: amount });
+      }
+    });
+  
+    scoreChanges.push({ userId: mainUserId, change: -totalPayout });
+  
+    const payoutDescriptions = Object.entries(payouts)
+        .map(([id, amt]) => `${users.find(u=>u.id === parseInt(id))?.name}: ${amt}`)
+        .join(', ');
+    const actionDescription = `${mainUser.name} 炸胡, pays out: ${payoutDescriptions}`;
+
+    const newHistory = saveStateToHistory(actionDescription, scoreChanges, currentStateForHistory);
+  
+    saveGameData({
+      history: newHistory,
+    });
+
+    toast({
+        title: "炸胡 Recorded",
+        description: actionDescription,
+    });
+  
+    setIsSpecialActionDialogOpen(false);
+  };
+
 
   const handleExecuteSpecialAction = (mainUserId: number, actionType: 'collect' | 'pay', amount: number) => {
     const currentStateForHistory: Omit<GameState, 'action' | 'scoreChanges'> = {
@@ -797,7 +846,9 @@ export default function Home() {
           isOpen={isSpecialActionDialogOpen}
           onClose={() => setIsSpecialActionDialogOpen(false)}
           mainUser={currentUserForWinAction}
+          users={users}
           onSave={handleExecuteSpecialAction}
+          onSaveZhaHu={handleExecuteZhaHuAction}
         />
        )}
        <HistoryDialog
