@@ -46,14 +46,11 @@ export function RenameDialog({ isOpen, onClose, users, onSave }: RenameDialogPro
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Rename Users</DialogTitle>
-          <DialogDescription>
-            Update the names for each user.
-          </DialogDescription>
+          <DialogTitle>改名</DialogTitle>
         </DialogHeader>
-        <div className="py-4 space-y-4">
+        <div className="space-y-4">
           {userNames.map(user => (
-            <div className="grid grid-cols-3 items-center gap-4" key={user.id}>
+            <div className="grid grid-cols-4 items-center gap-4" key={user.id}>
               <Label htmlFor={`user-name-${user.id}`} className="text-right">
                 User {user.id}
               </Label>
@@ -61,17 +58,17 @@ export function RenameDialog({ isOpen, onClose, users, onSave }: RenameDialogPro
                 id={`user-name-${user.id}`}
                 value={user.name}
                 onChange={(e) => handleNameChange(user.id, e.target.value)}
-                className="col-span-2"
+                className="col-span-3"
               />
             </div>
           ))}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            取消
           </Button>
           <Button type="submit" onClick={handleSave}>
-            Save
+            確定
           </Button>
         </DialogFooter>
       </DialogContent>

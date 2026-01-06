@@ -686,7 +686,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-stretch gap-2">
                   <Button variant="outline" size="sm" onClick={() => handleOpenWinActionDialog(user)}>
-                     食
+                     食胡
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleOpenSpecialActionDialog(user)}>
                      特別賞罰
@@ -783,7 +783,7 @@ export default function Home() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px] p-2">User</TableHead>
+                    <TableHead className="w-[120px] p-2">玩家</TableHead>
                     <TableHead colSpan={users.length} className="text-center w-[120px] p-2">番數</TableHead>
                   </TableRow>
                   <TableRow>

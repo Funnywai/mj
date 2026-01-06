@@ -32,6 +32,7 @@ export function SeatChangeDialog({ isOpen, onClose, users, onSave }: SeatChangeD
 
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,10 +50,11 @@ export function SeatChangeDialog({ isOpen, onClose, users, onSave }: SeatChangeD
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     dragOverItem.current = index;
     const list = [...orderedUsers];
-    const dragItemContent = list[dragItem.current!];
-    if (dragItem.current === index) return;
-    list.splice(dragItem.current!, 1);
-    list.splice(dragOverItem.current!, 0, dragItemContent);
+    if (dragItem.current === null || dragItem.current === index) return;
+    
+    const dragItemContent = list[dragItem.current];
+    list.splice(dragItem.current, 1);
+    list.splice(dragOverItem.current, 0, dragItemContent);
     dragItem.current = index;
     setOrderedUsers(list);
   };
@@ -63,6 +65,43 @@ export function SeatChangeDialog({ isOpen, onClose, users, onSave }: SeatChangeD
     setDraggingItem(null);
   };
 
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>, index: number) => {
+    dragItem.current = index;
+    setDraggingItem(index);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (dragItem.current === null) return;
+  
+    const touch = e.touches[0];
+    const listElement = listRef.current;
+    if (!listElement) return;
+  
+    const listItems = Array.from(listElement.children) as HTMLDivElement[];
+    const target = listItems.find(item => {
+      const rect = item.getBoundingClientRect();
+      return touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+    });
+  
+    if (target) {
+      const overIndex = parseInt(target.dataset.index || '0', 10);
+      if (dragOverItem.current !== overIndex) {
+        dragOverItem.current = overIndex;
+        const list = [...orderedUsers];
+        const dragItemContent = list[dragItem.current!];
+        list.splice(dragItem.current!, 1);
+        list.splice(dragOverItem.current!, 0, dragItemContent);
+        dragItem.current = overIndex;
+        setOrderedUsers(list);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    handleDragEnd();
+  };
+
+
   const handleSave = () => {
     onSave(orderedUsers);
   };
@@ -71,23 +110,21 @@ export function SeatChangeDialog({ isOpen, onClose, users, onSave }: SeatChangeD
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Change Seats (換位)</DialogTitle>
-          <DialogDescription>
-            Drag and drop users to change the order of dealer succession.
-          </DialogDescription>
+          <DialogTitle>換位</DialogTitle>
         </DialogHeader>
-        <div className="py-4 space-y-2">
-            <div className="flex justify-between items-center">
-                <h3 className="font-semibold">Current Order</h3>
-            </div>
+        <div className="space-y-2" ref={listRef}>
           {orderedUsers.map((user, index) => (
             <div
               key={user.id}
+              data-index={index}
               draggable
               onDragStart={(e) => handleDragStart(e, index)}
               onDragEnter={(e) => handleDragEnter(e, index)}
               onDragEnd={handleDragEnd}
               onDragOver={(e) => e.preventDefault()}
+              onTouchStart={(e) => handleTouchStart(e, index)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               className={cn(
                 "flex items-center gap-4 p-2 border rounded-md bg-secondary/30 cursor-grab active:cursor-grabbing",
                 draggingItem === index && "opacity-50 border-primary"
@@ -101,10 +138,10 @@ export function SeatChangeDialog({ isOpen, onClose, users, onSave }: SeatChangeD
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            取消
           </Button>
           <Button type="submit" onClick={handleSave}>
-            Save Order
+            確定
           </Button>
         </DialogFooter>
       </DialogContent>
