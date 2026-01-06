@@ -23,7 +23,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { useToast } from '@/hooks/use-toast';
 import { RenameDialog } from '@/app/components/rename-dialog';
 import { WinActionDialog } from '@/app/components/win-action-dialog';
 import { HistoryDialog } from '@/app/components/history-dialog';
@@ -104,7 +103,6 @@ export default function Home() {
     }
     return [];
   });
-  const { toast } = useToast();
 
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isWinActionDialogOpen, setIsWinActionDialogOpen] = useState(false);
@@ -257,11 +255,6 @@ export default function Home() {
     saveGameData({
       history: newHistory,
     });
-
-    toast({
-        title: "炸胡 Recorded",
-        description: actionDescription,
-    });
   
     setIsSpecialActionDialogOpen(false);
   };
@@ -288,11 +281,11 @@ export default function Home() {
     if (actionType === 'collect') {
       mainUserChange = amount * opponentIds.length;
       opponentIds.forEach(id => scoreChanges.push({ userId: id, change: -amount }));
-      actionDescription = `${mainUser.name} 收 ${amount} from everyone`;
+      actionDescription = `${mainUser.name} 收 ${amount} 番`;
     } else { // pay
       mainUserChange = -amount * opponentIds.length;
       opponentIds.forEach(id => scoreChanges.push({ userId: id, change: amount }));
-      actionDescription = `${mainUser.name} 賠 ${amount} to everyone`;
+      actionDescription = `${mainUser.name} 賠 ${amount} 番`;
     }
   
     scoreChanges.push({ userId: mainUserId, change: mainUserChange });
@@ -301,11 +294,6 @@ export default function Home() {
   
     saveGameData({
       history: newHistory,
-    });
-
-    toast({
-        title: "Special Action Recorded",
-        description: actionDescription,
     });
   
     setIsSpecialActionDialogOpen(false);
@@ -606,9 +594,6 @@ export default function Home() {
           laCounts: lastState.laCounts,
       });
 
-      toast({ description: "Last action restored." });
-    } else {
-        toast({ description: "No actions to restore." });
     }
   };
 
@@ -658,10 +643,6 @@ export default function Home() {
       laCounts: newLaCounts,
     });
   
-    toast({
-      title: "Surrendered!",
-      description: `${loser.name} has surrendered to ${winner.name}. Score has been reset.`,
-    });
   };
 
   const totalScores = useMemo(() => {
